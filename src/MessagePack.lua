@@ -444,6 +444,16 @@ unpackers['uint32'] = function(c)
     return ((b1 * 0x100 + b2) * 0x100 + b3) * 0x100 + b4
 end
 
+unpackers['uint64'] = function(c)
+    local s, i, j = c.s, c.i, c.j
+    if i+7 > j then
+        c:underflow()
+    end
+    local b1, b2, b3, b4, b5, b6, b7, b8 = s:sub(i, i+7):byte(1, 8)
+    c.i = i+8
+    return ((((((b1 * 0x100 + b2) * 0x100 + b3) * 0x100 + b4) * 0x100 + b5) * 0x100 + b6) * 0x100 + b7) * 0x100 + b8
+end
+
 unpackers['fixnum_neg'] = function (c, val)
     return val % 0x20 - 0x20
 end
@@ -465,7 +475,7 @@ unpackers['int16'] = function(c)
     end
     local b1, b2 = s:sub(i, i+1):byte(1, 2)
     c.i = i+2
-    return b1 * 0x100 + b2 - 0x10000
+    return ((b1 - 0xFF) * 0x100 + (b2 - 0xFF)) - 1
 end
 
 unpackers['int32'] = function(c)
@@ -475,7 +485,17 @@ unpackers['int32'] = function(c)
     end
     local b1, b2, b3, b4 = s:sub(i, i+3):byte(1, 4)
     c.i = i+4
-    return ((b1 * 0x100 + b2) * 0x100 + b3) * 0x100 + b4 - 0x100000000
+    return ((((b1 - 0xFF) * 0x100 + (b2 - 0xFF)) * 0x100 + (b3 - 0xFF)) * 0x100 + (b4 - 0xFF)) - 1
+end
+
+unpackers['int64'] = function(c)
+    local s, i, j = c.s, c.i, c.j
+    if i+7 > j then
+        c:underflow()
+    end
+    local b1, b2, b3, b4, b5, b6, b7, b8 = s:sub(i, i+7):byte(1, 8)
+    c.i = i+8
+    return ((((((((b1 - 0xFF) * 0x100 + (b2 - 0xFF)) * 0x100 + (b3 - 0xFF)) * 0x100 + (b4 - 0xFF)) * 0x100 + (b5 - 0xFF)) * 0x100 + (b6 - 0xFF)) * 0x100 + (b7 - 0xFF)) * 0x100 + (b8 - 0xFF)) - 1
 end
 
 unpackers['fixraw'] = function (c, val)
@@ -591,13 +611,29 @@ function m.unpack (s, i, j)
                         error "missing bytes"
                     end,
     }
-    local data, i = unpackers['any'](cursor)
+    local data = unpackers['any'](cursor)
     if cursor.i < cursor.j then
         error "extra bytes"
     end
     return data
 end
 
+function m.unpacker (s)
+    checktype('unpacker', 1, s, 'string')
+    local cursor = {
+        s = s,
+        i = 1,
+        j = #s,
+        underflow = function (self)
+                        error "missing bytes"
+                    end,
+    }
+    return function ()
+        if cursor.i <= cursor.j then
+            return true, unpackers['any'](cursor)
+        end
+    end
+end
 
 if NUMBER_INTEGRAL then
     set_number'integer'
