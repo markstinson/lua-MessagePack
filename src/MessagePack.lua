@@ -160,7 +160,15 @@ packers['integer'] = function(buffer, n)
                                      floor(n / 0x100) % 0x100,
                                      n % 0x100)
         else
-            return packers['uint64'](buffer, n)
+            buffer[#buffer+1] = char(0xCF,      -- uint64
+                                     0,         -- only 53 bits from double
+                                     floor(n / 0x1000000000000),
+                                     floor(n / 0x10000000000) % 0x100,
+                                     floor(n / 0x100000000) % 0x100,
+                                     floor(n / 0x1000000) % 0x100,
+                                     floor(n / 0x10000) % 0x100,
+                                     floor(n / 0x100) % 0x100,
+                                     n % 0x100)
         end
     else
         if n >= -0x20 then
@@ -181,7 +189,15 @@ packers['integer'] = function(buffer, n)
                                      floor(n / 0x100) % 0x100,
                                      n % 0x100)
         else
-            return packers['int64'](buffer, n)
+            buffer[#buffer+1] = char(0xD3,      -- int64
+                                     0xFF,      -- only 53 bits from double
+                                     floor(n / 0x1000000000000),
+                                     floor(n / 0x10000000000) % 0x100,
+                                     floor(n / 0x100000000) % 0x100,
+                                     floor(n / 0x1000000) % 0x100,
+                                     floor(n / 0x10000) % 0x100,
+                                     floor(n / 0x100) % 0x100,
+                                     n % 0x100)
       end
     end
 end
@@ -255,8 +271,6 @@ local set_number = function(number)
                 return packers['integer'](buffer, n)
             end
         end
-        packers['uint64'] = packers['float']
-        packers['int64'] = packers['float']
     elseif number == 'double' then
         packers['number'] = function (buffer, n)
             if floor(n) ~= n or n ~= n or n == huge or n == -huge then
@@ -265,8 +279,6 @@ local set_number = function(number)
                 return packers['integer'](buffer, n)
             end
         end
-        packers['uint64'] = packers['double']
-        packers['int64'] = packers['double']
     else
         argerror ('set_number', 1, "invalid option '" .. number .."'")
     end
