@@ -597,16 +597,12 @@ function m.pack (data)
 end
 
 
-function m.unpack (s, i, j)
+function m.unpack (s)
     checktype('unpack', 1, s, 'string')
-    i = i or 1
-    checktype('unpack', 2, i, 'number')
-    j = j or #s
-    checktype('unpack', 3, j, 'number')
     local cursor = {
         s = s,
-        i = i,
-        j = j,
+        i = 1,
+        j = #s,
         underflow = function (self)
                         error "missing bytes"
                     end,
