@@ -68,7 +68,7 @@ MANIFEST: doc
 
 $(TARBALL): MANIFEST
 	[ -d lua-MessagePack-$(VERSION) ] || ln -s . lua-MessagePack-$(VERSION)
-	perl -ne 'print qq{lua-TestLongString-$(VERSION)/$$_};' MANIFEST | \
+	perl -ne 'print qq{lua-MessagePack-$(VERSION)/$$_};' MANIFEST | \
 	    tar -zc -T - -f $(TARBALL)
 	rm lua-MessagePack-$(VERSION)
 	rm -rf doc
