@@ -162,7 +162,7 @@ packers['integer'] = function(buffer, n)
         else
             buffer[#buffer+1] = char(0xCF,      -- uint64
                                      0,         -- only 53 bits from double
-                                     floor(n / 0x1000000000000),
+                                     floor(n / 0x1000000000000) % 0x100,
                                      floor(n / 0x10000000000) % 0x100,
                                      floor(n / 0x100000000) % 0x100,
                                      floor(n / 0x1000000) % 0x100,
@@ -191,7 +191,7 @@ packers['integer'] = function(buffer, n)
         else
             buffer[#buffer+1] = char(0xD3,      -- int64
                                      0xFF,      -- only 53 bits from double
-                                     floor(n / 0x1000000000000),
+                                     floor(n / 0x1000000000000) % 0x100,
                                      floor(n / 0x10000000000) % 0x100,
                                      floor(n / 0x100000000) % 0x100,
                                      floor(n / 0x1000000) % 0x100,
