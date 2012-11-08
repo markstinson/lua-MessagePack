@@ -399,6 +399,7 @@ local types_map = setmetatable({
             return 'reserved' .. k
         end
 end })
+m.types_map = types_map
 
 local unpackers = setmetatable({}, {
     __index = function (t, k) error("unpack '" .. k .. "' is unimplemented") end
