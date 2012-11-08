@@ -8,7 +8,7 @@
   <meta http-equiv="Author" content="Fran&ccedil;ois Perrad"/>
   <meta http-equiv="Language" content="en"/>
   <meta http-equiv="Description" content="Module MessagePack"/>
-  <meta http-equiv="Keywords" content="lua, MessagePack, msgpack, pack, unpack, unpacker"/>
+  <meta http-equiv="Keywords" content="lua, MessagePack, msgpack, pack, unpack, unpacker, set_number, set_integer"/>
 </head>
 
 <body>
@@ -62,13 +62,46 @@
 
 <h4><code>pack( data )</code></h4>
 
-<h4><code>unpack( s [, i [, j ]] )</code></h4>
+<p>Serialize a <code>data</code>.</p>
+
+<h4><code>unpack( str )</code></h4>
+
+<p>Deserialize a string.</p>
+
+<h4><code>unpacker( stream )</code></h4>
+
+<p>Accept a string or an <em>object</em> which has a method <code>read</code>,
+like <code>file</code> and returns a iterator.</p>
+<p>The iterator gives a couple of values, the <em>interesting</em> value is the second.</p>
+
+<h4><code>set_number( str )</code></h4>
+
+<p>Configures the behaviour of <code>pack</code>.
+The valid options are <code>double</code>, <code>float</code> and <code>integer</code>.
+The default is <em>usually</em> <code>double</code>.</p>
+
+<h4><code>set_integer( str )</code></h4>
+
+<p>Configures the behaviour of <code>pack</code>.
+The valid options are <code>signed</code> and <code>unsigned</code>.
+The default is <code>signed</code>.</p>
 
 <h2><a name="examples"></a>Examples</h2>
 
 <pre class="example">
 local mp = require 'MessagePack'
 
+mp.set_number'float'
+mp.set_integer'unsigned'
+
+mpac = mp.pack(data)
+data = mp.unpack(mpac)
+
+f = io.open('file', 'r')
+for _, v in mp.unpacker(f) do
+    print(v)
+end
+f:close()
 </pre>
 
 </div> <!-- id="content" -->
