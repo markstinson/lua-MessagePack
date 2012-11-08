@@ -15,10 +15,10 @@ local data = {
     0,                  "0 uint16",
     0,                  "0 uint32",
     0,                  "0 uint64",
---    0,                  "0 int8",
---    0,                  "0 int16",
---    0,                  "0 int32",
---    0,                  "0 int64",
+    0,                  "0 int8",
+    0,                  "0 int16",
+    0,                  "0 int32",
+    0,                  "0 int64",
     -1,                 "-1 Negative FixNum",
     -1,                 "-1 int8",
     -1,                 "-1 int16",
@@ -74,10 +74,10 @@ cc 00                           # 0 uint8
 cd 00 00                        # 0 uint16
 ce 00 00 00 00                  # 0 uint32
 cf 00 00 00 00 00 00 00 00      # 0 uint64
-# d0 00                           # 0 int8
-# d1 00 00                        # 0 int16
-# d2 00 00 00 00                  # 0 int32
-# d3 00 00 00 00 00 00 00 00      # 0 int64
+d0 00                           # 0 int8
+d1 00 00                        # 0 int16
+d2 00 00 00 00                  # 0 int32
+d3 00 00 00 00 00 00 00 00      # 0 int64
 ff                              # -1 Negative FixNum
 d0 ff                           # -1 int8
 d1 ff ff                        # -1 int16

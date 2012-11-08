@@ -477,7 +477,11 @@ unpackers['int8'] = function(c)
     end
     local b1 = s:sub(i, i):byte()
     c.i = i+1
-    return b1 - 0x100
+    if b1 < 0x80 then
+        return b1
+    else
+        return b1 - 0x100
+    end
 end
 
 unpackers['int16'] = function(c)
@@ -487,7 +491,11 @@ unpackers['int16'] = function(c)
     end
     local b1, b2 = s:sub(i, i+1):byte(1, 2)
     c.i = i+2
-    return ((b1 - 0xFF) * 0x100 + (b2 - 0xFF)) - 1
+    if b1 < 0x80 then
+        return b1 * 0x100 + b2
+    else
+        return ((b1 - 0xFF) * 0x100 + (b2 - 0xFF)) - 1
+    end
 end
 
 unpackers['int32'] = function(c)
@@ -497,7 +505,11 @@ unpackers['int32'] = function(c)
     end
     local b1, b2, b3, b4 = s:sub(i, i+3):byte(1, 4)
     c.i = i+4
-    return ((((b1 - 0xFF) * 0x100 + (b2 - 0xFF)) * 0x100 + (b3 - 0xFF)) * 0x100 + (b4 - 0xFF)) - 1
+    if b1 < 0x80 then
+        return ((b1 * 0x100 + b2) * 0x100 + b3) * 0x100 + b4
+    else
+        return ((((b1 - 0xFF) * 0x100 + (b2 - 0xFF)) * 0x100 + (b3 - 0xFF)) * 0x100 + (b4 - 0xFF)) - 1
+    end
 end
 
 unpackers['int64'] = function(c)
@@ -507,7 +519,11 @@ unpackers['int64'] = function(c)
     end
     local b1, b2, b3, b4, b5, b6, b7, b8 = s:sub(i, i+7):byte(1, 8)
     c.i = i+8
-    return ((((((((b1 - 0xFF) * 0x100 + (b2 - 0xFF)) * 0x100 + (b3 - 0xFF)) * 0x100 + (b4 - 0xFF)) * 0x100 + (b5 - 0xFF)) * 0x100 + (b6 - 0xFF)) * 0x100 + (b7 - 0xFF)) * 0x100 + (b8 - 0xFF)) - 1
+    if b1 < 0x80 then
+        return ((((((b1 * 0x100 + b2) * 0x100 + b3) * 0x100 + b4) * 0x100 + b5) * 0x100 + b6) * 0x100 + b7) * 0x100 + b8
+    else
+        return ((((((((b1 - 0xFF) * 0x100 + (b2 - 0xFF)) * 0x100 + (b3 - 0xFF)) * 0x100 + (b4 - 0xFF)) * 0x100 + (b5 - 0xFF)) * 0x100 + (b6 - 0xFF)) * 0x100 + (b7 - 0xFF)) * 0x100 + (b8 - 0xFF)) - 1
+    end
 end
 
 unpackers['fixraw'] = function (c, val)
