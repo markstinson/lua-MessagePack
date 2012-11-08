@@ -635,6 +635,7 @@ unpackers['raw16'] = function (c)
     end
     local b1, b2 = s:sub(i, i+1):byte(1, 2)
     i = i+2
+    c.i = i
     local n = b1 * 0x100 + b2
     local e = i+n-1
     if e > j then
@@ -653,6 +654,7 @@ unpackers['raw32'] = function (c)
     end
     local b1, b2, b3, b4 = s:sub(i, i+3):byte(1, 4)
     i = i+4
+    c.i = i
     local n = ((b1 * 0x100 + b2) * 0x100 + b3) * 0x100 + b4
     local e = i+n-1
     if e > j then
@@ -773,7 +775,7 @@ function m.unpacker (f)
                 pcall(cursor.underflow, cursor, cursor.i)
             end
             if cursor.i <= cursor.j then
-                return cursor.i, unpackers['any'](cursor)
+                return true, unpackers['any'](cursor)
             end
         end
     end
