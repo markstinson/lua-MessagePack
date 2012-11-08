@@ -142,7 +142,7 @@ packers['table'] = function(buffer, tbl)
     end
 end
 
-packers['integer'] = function(buffer, n)
+packers['unsigned'] = function(buffer, n)
     if n >= 0 then
         if n <= 0x7F then
             buffer[#buffer+1] = char(n)         -- fixnum_pos
@@ -201,6 +201,74 @@ packers['integer'] = function(buffer, n)
       end
     end
 end
+
+packers['signed'] = function(buffer, n)
+    if n >= 0 then
+        if n <= 0x7F then
+            buffer[#buffer+1] = char(n)         -- fixnum_pos
+        elseif n <= 0x7FFF then
+            buffer[#buffer+1] = char(0xD1,      -- int16
+                                     floor(n / 0x100),
+                                     n % 0x100)
+        elseif n <= 0x7FFFFFFF then
+            buffer[#buffer+1] = char(0xD2,      -- int32
+                                     floor(n / 0x1000000),
+                                     floor(n / 0x10000) % 0x100,
+                                     floor(n / 0x100) % 0x100,
+                                     n % 0x100)
+        else
+            buffer[#buffer+1] = char(0xD3,      -- int64
+                                     0,         -- only 53 bits from double
+                                     floor(n / 0x1000000000000) % 0x100,
+                                     floor(n / 0x10000000000) % 0x100,
+                                     floor(n / 0x100000000) % 0x100,
+                                     floor(n / 0x1000000) % 0x100,
+                                     floor(n / 0x10000) % 0x100,
+                                     floor(n / 0x100) % 0x100,
+                                     n % 0x100)
+        end
+    else
+        if n >= -0x20 then
+            buffer[#buffer+1] = char(0xE0 + 0x20 + n)   -- fixnum_neg
+        elseif n >= -0x80 then
+            buffer[#buffer+1] = char(0xD0,      -- int8
+                                     0x100 + n)
+        elseif n >= -0x8000 then
+            n = 0x10000 + n
+            buffer[#buffer+1] = char(0xD1,      -- int16
+                                     floor(n / 0x100),
+                                     n % 0x100)
+        elseif n >= -0x80000000 then
+            n = 0x100000000 + n
+            buffer[#buffer+1] = char(0xD2,      -- int32
+                                     floor(n / 0x1000000),
+                                     floor(n / 0x10000) % 0x100,
+                                     floor(n / 0x100) % 0x100,
+                                     n % 0x100)
+        else
+            buffer[#buffer+1] = char(0xD3,      -- int64
+                                     0xFF,      -- only 53 bits from double
+                                     floor(n / 0x1000000000000) % 0x100,
+                                     floor(n / 0x10000000000) % 0x100,
+                                     floor(n / 0x100000000) % 0x100,
+                                     floor(n / 0x1000000) % 0x100,
+                                     floor(n / 0x10000) % 0x100,
+                                     floor(n / 0x100) % 0x100,
+                                     n % 0x100)
+      end
+    end
+end
+
+local set_integer = function(integer)
+    if integer == 'unsigned' then
+        packers['integer'] = packers['unsigned']
+    elseif integer == 'signed' then
+        packers['integer'] = packers['signed']
+    else
+        argerror ('set_integer', 1, "invalid option '" .. integer .."'")
+    end
+end
+m.set_integer = set_integer
 
 packers['float'] = function (buffer, n)
     if n ~= n then      -- nan
@@ -262,7 +330,7 @@ end
 
 local set_number = function(number)
     if number == 'integer' then
-        packers['number'] = packers['integer']
+        packers['number'] = packers['signed']
     elseif number == 'float' then
         packers['number'] = function (buffer, n)
             if floor(n) ~= n or n ~= n or n == huge or n == -huge then
@@ -284,6 +352,13 @@ local set_number = function(number)
     end
 end
 m.set_number = set_number
+
+function m.pack (data)
+    local buffer = {}
+    packers[type(data)](buffer, data)
+    return tconcat(buffer)
+end
+
 
 local types_map = setmetatable({
     [0xC0] = 'nil',
@@ -618,13 +693,6 @@ unpackers['map32'] = function(c)
 end
 
 
-function m.pack (data)
-    local buffer = {}
-    packers[type(data)](buffer, data)
-    return tconcat(buffer)
-end
-
-
 function m.unpack (s)
     checktype('unpack', 1, s, 'string')
     local cursor = {
@@ -659,6 +727,7 @@ function m.unpacker (s)
     end
 end
 
+set_integer'signed'
 if NUMBER_INTEGRAL then
     set_number'integer'
 elseif SIZEOF_NUMBER == 4 then
