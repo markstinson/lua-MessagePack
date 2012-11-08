@@ -62,7 +62,7 @@ local data = {
     { {"a"} },          "[[\"a\"]]",
 }
 
-plan(#data)
+plan(3 * #data / 2)
 
 -- see http://github.com/msgpack/msgpack/blob/master/test/cases_gen.rb
 local source = [===[
@@ -140,3 +140,21 @@ for _, val in mp.unpacker(mpac) do
     end
     i = i + 2
 end
+
+local f = io.open('cases.mpac', 'w')
+f:write(mpac)
+f:close()
+
+local i = 1
+local f = io.open('cases.mpac', 'r')
+for _, val in mp.unpacker(f) do
+    if type(val) == 'table' then
+        is_deeply(val, data[i], "reference   " .. data[i+1])
+    else
+        is(val, data[i], "reference   " .. data[i+1])
+    end
+    i = i + 2
+end
+f:close()
+
+os.remove 'cases.mpac'  -- clean up

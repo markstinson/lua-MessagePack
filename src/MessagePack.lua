@@ -20,6 +20,7 @@ end
 
 local error = error
 local pairs = pairs
+local pcall = pcall
 local setmetatable = setmetatable
 local tostring = tostring
 local type = type
@@ -51,6 +52,7 @@ end
 local packers = setmetatable({}, {
     __index = function (t, k) error("pack '" .. k .. "' is unimplemented") end
 })
+m.packers = packers
 
 packers['nil'] = function (buffer)
     buffer[#buffer+1] = char(0xC0)              -- nil
@@ -401,6 +403,7 @@ end })
 local unpackers = setmetatable({}, {
     __index = function (t, k) error("unpack '" .. k .. "' is unimplemented") end
 })
+m.unpackers = unpackers
 
 local function unpack_array (c, n)
     local t = {}
@@ -426,7 +429,8 @@ end
 unpackers['any'] = function (c)
     local s, i, j = c.s, c.i, c.j
     if i > j then
-        c:underflow()
+        c:underflow(i)
+        s, i, j = c.s, c.i, c.j
     end
     local val = s:sub(i, i):byte()
     c.i = i+1
@@ -448,7 +452,8 @@ end
 unpackers['float'] = function (c)
     local s, i, j = c.s, c.i, c.j
     if i+3 > j then
-        c:underflow()
+        c:underflow(i+3)
+        s, i, j = c.s, c.i, c.j
     end
     local b1, b2, b3, b4 = s:sub(i, i+3):byte(1, 4)
     local sign = b1 > 0x7F
@@ -474,7 +479,8 @@ end
 unpackers['double'] = function (c)
     local s, i, j = c.s, c.i, c.j
     if i+7 > j then
-        c:underflow()
+        c:underflow(i+7)
+        s, i, j = c.s, c.i, c.j
     end
     local b1, b2, b3, b4, b5, b6, b7, b8 = s:sub(i, i+7):byte(1, 8)
     local sign = b1 > 0x7F
@@ -504,7 +510,8 @@ end
 unpackers['uint8'] = function (c)
     local s, i, j = c.s, c.i, c.j
     if i > j then
-        c:underflow()
+        c:underflow(i)
+        s, i, j = c.s, c.i, c.j
     end
     local b1 = s:sub(i, i):byte()
     c.i = i+1
@@ -514,7 +521,8 @@ end
 unpackers['uint16'] = function (c)
     local s, i, j = c.s, c.i, c.j
     if i+1 > j then
-        c:underflow()
+        c:underflow(i+1)
+        s, i, j = c.s, c.i, c.j
     end
     local b1, b2 = s:sub(i, i+1):byte(1, 2)
     c.i = i+2
@@ -524,7 +532,8 @@ end
 unpackers['uint32'] = function (c)
     local s, i, j = c.s, c.i, c.j
     if i+3 > j then
-        c:underflow()
+        c:underflow(i+3)
+        s, i, j = c.s, c.i, c.j
     end
     local b1, b2, b3, b4 = s:sub(i, i+3):byte(1, 4)
     c.i = i+4
@@ -534,7 +543,8 @@ end
 unpackers['uint64'] = function (c)
     local s, i, j = c.s, c.i, c.j
     if i+7 > j then
-        c:underflow()
+        c:underflow(i+7)
+        s, i, j = c.s, c.i, c.j
     end
     local b1, b2, b3, b4, b5, b6, b7, b8 = s:sub(i, i+7):byte(1, 8)
     c.i = i+8
@@ -548,7 +558,8 @@ end
 unpackers['int8'] = function (c)
     local s, i, j = c.s, c.i, c.j
     if i > j then
-        c:underflow()
+        c:underflow(i)
+        s, i, j = c.s, c.i, c.j
     end
     local b1 = s:sub(i, i):byte()
     c.i = i+1
@@ -562,7 +573,8 @@ end
 unpackers['int16'] = function (c)
     local s, i, j = c.s, c.i, c.j
     if i+1 > j then
-        c:underflow()
+        c:underflow(i+1)
+        s, i, j = c.s, c.i, c.j
     end
     local b1, b2 = s:sub(i, i+1):byte(1, 2)
     c.i = i+2
@@ -576,7 +588,8 @@ end
 unpackers['int32'] = function (c)
     local s, i, j = c.s, c.i, c.j
     if i+3 > j then
-        c:underflow()
+        c:underflow(i+3)
+        s, i, j = c.s, c.i, c.j
     end
     local b1, b2, b3, b4 = s:sub(i, i+3):byte(1, 4)
     c.i = i+4
@@ -590,7 +603,8 @@ end
 unpackers['int64'] = function (c)
     local s, i, j = c.s, c.i, c.j
     if i+7 > j then
-        c:underflow()
+        c:underflow(i+7)
+        s, i, j = c.s, c.i, c.j
     end
     local b1, b2, b3, b4, b5, b6, b7, b8 = s:sub(i, i+7):byte(1, 8)
     c.i = i+8
@@ -606,7 +620,8 @@ unpackers['fixraw'] = function (c, val)
     local n = val % 0x20
     local e = i+n-1
     if e > j then
-        c:underflow()
+        c:underflow(e)
+        s, i, j = c.s, c.i, c.j
     end
     c.i = i+n
     return s:sub(i, e)
@@ -615,14 +630,16 @@ end
 unpackers['raw16'] = function (c)
     local s, i, j = c.s, c.i, c.j
     if i+1 > j then
-        c:underflow()
+        c:underflow(i+1)
+        s, i, j = c.s, c.i, c.j
     end
     local b1, b2 = s:sub(i, i+1):byte(1, 2)
     i = i+2
     local n = b1 * 0x100 + b2
     local e = i+n-1
     if e > j then
-        c:underflow()
+        c:underflow(e)
+        s, i, j = c.s, c.i, c.j
     end
     c.i = i+n
     return s:sub(i, e)
@@ -631,14 +648,16 @@ end
 unpackers['raw32'] = function (c)
     local s, i, j = c.s, c.i, c.j
     if i+3 > j then
-        c:underflow()
+        c:underflow(i+3)
+        s, i, j = c.s, c.i, c.j
     end
     local b1, b2, b3, b4 = s:sub(i, i+3):byte(1, 4)
     i = i+4
     local n = ((b1 * 0x100 + b2) * 0x100 + b3) * 0x100 + b4
     local e = i+n-1
     if e > j then
-        c:underflow()
+        c:underflow(e)
+        s, i, j = c.s, c.i, c.j
     end
     c.i = i+n
     return s:sub(i, e)
@@ -651,7 +670,8 @@ end
 unpackers['array16'] = function (c)
     local s, i, j = c.s, c.i, c.j
     if i+1 > j then
-        c:underflow()
+        c:underflow(i+1)
+        s, i, j = c.s, c.i, c.j
     end
     local b1, b2 = s:sub(i, i+1):byte(1, 2)
     c.i = i+2
@@ -661,7 +681,8 @@ end
 unpackers['array32'] = function (c)
     local s, i, j = c.s, c.i, c.j
     if i+3 > j then
-        c:underflow()
+        c:underflow(i+3)
+        s, i, j = c.s, c.i, c.j
     end
     local b1, b2, b3, b4 = s:sub(i, i+3):byte(1, 4)
     c.i = i+4
@@ -675,7 +696,8 @@ end
 unpackers['map16'] = function (c)
     local s, i, j = c.s, c.i, c.j
     if i+1 > j then
-        c:underflow()
+        c:underflow(i+1)
+        s, i, j = c.s, c.i, c.j
     end
     local b1, b2 = s:sub(i, i+1):byte(1, 2)
     c.i = i+2
@@ -685,7 +707,8 @@ end
 unpackers['map32'] = function (c)
     local s, i, j = c.s, c.i, c.j
     if i+3 > j then
-        c:underflow()
+        c:underflow(i+3)
+        s, i, j = c.s, c.i, c.j
     end
     local b1, b2, b3, b4 = s:sub(i, i+3):byte(1, 4)
     c.i = i+4
@@ -710,19 +733,48 @@ function m.unpack (s)
     return data
 end
 
-function m.unpacker (s)
-    checktype('unpacker', 1, s, 'string')
-    local cursor = {
-        s = s,
-        i = 1,
-        j = #s,
-        underflow = function (self)
-                        error "missing bytes"
-                    end,
-    }
-    return function ()
-        if cursor.i <= cursor.j then
-            return true, unpackers['any'](cursor)
+function m.unpacker (f)
+    if type(f) == 'string' then
+        local cursor = {
+            s = f,
+            i = 1,
+            j = #f,
+            underflow = function (self)
+                            error "missing bytes"
+                        end,
+        }
+        return function ()
+            if cursor.i <= cursor.j then
+                return cursor.i, unpackers['any'](cursor)
+            end
+        end
+    else
+        local cursor = {
+            s = '',
+            i = 1,
+            j = 0,
+            underflow = function (self, e)
+                            self.s = self.s:sub(self.i)
+                            e = e - self.i + 1
+                            self.i = 1
+                            self.j = 0
+                            while e > self.j do
+                                local readen = f:read(4096)
+                                if not readen then
+                                    error "missing bytes"
+                                end
+                                self.s = self.s .. readen
+                                self.j = #self.s
+                            end
+                        end,
+        }
+        return function ()
+            if cursor.i > cursor.j then
+                pcall(cursor.underflow, cursor, cursor.i)
+            end
+            if cursor.i <= cursor.j then
+                return cursor.i, unpackers['any'](cursor)
+            end
         end
     end
 end
