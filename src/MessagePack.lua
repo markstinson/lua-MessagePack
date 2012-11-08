@@ -56,7 +56,7 @@ packers['nil'] = function (buffer)
     buffer[#buffer+1] = char(0xC0)              -- nil
 end
 
-packers['boolean'] = function(buffer, bool)
+packers['boolean'] = function (buffer, bool)
     if bool then
         buffer[#buffer+1] = char(0xC3)          -- true
     else
@@ -64,7 +64,7 @@ packers['boolean'] = function(buffer, bool)
     end
 end
 
-packers['string'] = function(buffer, str)
+packers['string'] = function (buffer, str)
     local n = #str
     if n <= 0x1F then
         buffer[#buffer+1] = char(0xA0 + n)      -- fixraw
@@ -84,7 +84,7 @@ packers['string'] = function(buffer, str)
     buffer[#buffer+1] = str
 end
 
-packers['table'] = function(buffer, tbl)
+packers['table'] = function (buffer, tbl)
     local is_map, n, max = false, 0, 0
     for k in pairs(tbl) do
         if type(k) == 'number' and k > 0 then
@@ -142,7 +142,7 @@ packers['table'] = function(buffer, tbl)
     end
 end
 
-packers['unsigned'] = function(buffer, n)
+packers['unsigned'] = function (buffer, n)
     if n >= 0 then
         if n <= 0x7F then
             buffer[#buffer+1] = char(n)         -- fixnum_pos
@@ -202,7 +202,7 @@ packers['unsigned'] = function(buffer, n)
     end
 end
 
-packers['signed'] = function(buffer, n)
+packers['signed'] = function (buffer, n)
     if n >= 0 then
         if n <= 0x7F then
             buffer[#buffer+1] = char(n)         -- fixnum_pos
@@ -259,7 +259,7 @@ packers['signed'] = function(buffer, n)
     end
 end
 
-local set_integer = function(integer)
+local set_integer = function (integer)
     if integer == 'unsigned' then
         packers['integer'] = packers['unsigned']
     elseif integer == 'signed' then
@@ -328,7 +328,7 @@ packers['double'] = function (buffer, n)
     end
 end
 
-local set_number = function(number)
+local set_number = function (number)
     if number == 'integer' then
         packers['number'] = packers['signed']
     elseif number == 'float' then
@@ -402,7 +402,7 @@ local unpackers = setmetatable({}, {
     __index = function (t, k) error("unpack '" .. k .. "' is unimplemented") end
 })
 
-local function unpack_array(c, n)
+local function unpack_array (c, n)
     local t = {}
     while n > 0 do
         local v = unpackers['any'](c)
@@ -412,7 +412,7 @@ local function unpack_array(c, n)
     return t
 end
 
-local function unpack_map(c, n)
+local function unpack_map (c, n)
     local t = {}
     while n > 0 do
         local k = unpackers['any'](c)
@@ -433,19 +433,19 @@ unpackers['any'] = function (c)
     return unpackers[types_map[val]](c, val)
 end
 
-unpackers['nil'] = function (c)
+unpackers['nil'] = function ()
     return nil
 end
 
-unpackers['false'] = function(c)
+unpackers['false'] = function ()
     return false
 end
 
-unpackers['true'] = function(c)
+unpackers['true'] = function ()
     return true
 end
 
-unpackers['float'] = function(c)
+unpackers['float'] = function (c)
     local s, i, j = c.s, c.i, c.j
     if i+3 > j then
         c:underflow()
@@ -471,7 +471,7 @@ unpackers['float'] = function(c)
     return n
 end
 
-unpackers['double'] = function(c)
+unpackers['double'] = function (c)
     local s, i, j = c.s, c.i, c.j
     if i+7 > j then
         c:underflow()
@@ -501,7 +501,7 @@ unpackers['fixnum_pos'] = function (c, val)
     return val
 end
 
-unpackers['uint8'] = function(c)
+unpackers['uint8'] = function (c)
     local s, i, j = c.s, c.i, c.j
     if i > j then
         c:underflow()
@@ -511,7 +511,7 @@ unpackers['uint8'] = function(c)
     return b1
 end
 
-unpackers['uint16'] = function(c)
+unpackers['uint16'] = function (c)
     local s, i, j = c.s, c.i, c.j
     if i+1 > j then
         c:underflow()
@@ -521,7 +521,7 @@ unpackers['uint16'] = function(c)
     return b1 * 0x100 + b2
 end
 
-unpackers['uint32'] = function(c)
+unpackers['uint32'] = function (c)
     local s, i, j = c.s, c.i, c.j
     if i+3 > j then
         c:underflow()
@@ -531,7 +531,7 @@ unpackers['uint32'] = function(c)
     return ((b1 * 0x100 + b2) * 0x100 + b3) * 0x100 + b4
 end
 
-unpackers['uint64'] = function(c)
+unpackers['uint64'] = function (c)
     local s, i, j = c.s, c.i, c.j
     if i+7 > j then
         c:underflow()
@@ -545,7 +545,7 @@ unpackers['fixnum_neg'] = function (c, val)
     return val % 0x20 - 0x20
 end
 
-unpackers['int8'] = function(c)
+unpackers['int8'] = function (c)
     local s, i, j = c.s, c.i, c.j
     if i > j then
         c:underflow()
@@ -559,7 +559,7 @@ unpackers['int8'] = function(c)
     end
 end
 
-unpackers['int16'] = function(c)
+unpackers['int16'] = function (c)
     local s, i, j = c.s, c.i, c.j
     if i+1 > j then
         c:underflow()
@@ -573,7 +573,7 @@ unpackers['int16'] = function(c)
     end
 end
 
-unpackers['int32'] = function(c)
+unpackers['int32'] = function (c)
     local s, i, j = c.s, c.i, c.j
     if i+3 > j then
         c:underflow()
@@ -587,7 +587,7 @@ unpackers['int32'] = function(c)
     end
 end
 
-unpackers['int64'] = function(c)
+unpackers['int64'] = function (c)
     local s, i, j = c.s, c.i, c.j
     if i+7 > j then
         c:underflow()
@@ -612,7 +612,7 @@ unpackers['fixraw'] = function (c, val)
     return s:sub(i, e)
 end
 
-unpackers['raw16'] = function(c)
+unpackers['raw16'] = function (c)
     local s, i, j = c.s, c.i, c.j
     if i+1 > j then
         c:underflow()
@@ -628,7 +628,7 @@ unpackers['raw16'] = function(c)
     return s:sub(i, e)
 end
 
-unpackers['raw32'] = function(c)
+unpackers['raw32'] = function (c)
     local s, i, j = c.s, c.i, c.j
     if i+3 > j then
         c:underflow()
@@ -648,7 +648,7 @@ unpackers['fixarray'] = function (c, val)
     return unpack_array(c, val % 0x10)
 end
 
-unpackers['array16'] = function(c)
+unpackers['array16'] = function (c)
     local s, i, j = c.s, c.i, c.j
     if i+1 > j then
         c:underflow()
@@ -658,7 +658,7 @@ unpackers['array16'] = function(c)
     return unpack_array(c, b1 * 0x100 + b2)
 end
 
-unpackers['array32'] = function(c)
+unpackers['array32'] = function (c)
     local s, i, j = c.s, c.i, c.j
     if i+3 > j then
         c:underflow()
@@ -672,7 +672,7 @@ unpackers['fixmap'] = function (c, val)
     return unpack_map(c, val % 0x10)
 end
 
-unpackers['map16'] = function(c)
+unpackers['map16'] = function (c)
     local s, i, j = c.s, c.i, c.j
     if i+1 > j then
         c:underflow()
@@ -682,7 +682,7 @@ unpackers['map16'] = function(c)
     return unpack_map(c, b1 * 0x100 + b2)
 end
 
-unpackers['map32'] = function(c)
+unpackers['map32'] = function (c)
     local s, i, j = c.s, c.i, c.j
     if i+3 > j then
         c:underflow()
