@@ -31,8 +31,18 @@ local ldexp = require'math'.ldexp
 local huge = require'math'.huge
 local tconcat = require'table'.concat
 
+--[[ debug only
+local function hexadump (s)
+    return (s:gsub('.', function (c) return string.format('%02X ', c:byte()) end))
+end
+--]]
+
 _ENV = nil
 local m = {}
+
+--[[ debug only
+m.hexadump = hexadump
+--]]
 
 local function argerror (caller, narg, extramsg)
     error("bad argument #" .. tostring(narg) .. " to "
@@ -470,6 +480,8 @@ unpackers['float'] = function (c)
         n = 0
     elseif mant == 0 and expo == 0xFF then
         n = sign * huge
+    elseif mant == 0x80000 and expo == 0xFF then
+        n = 0/0
     else
         n = sign * ldexp(1 + mant / 0x800000, expo - 0x7F)
     end
@@ -497,6 +509,8 @@ unpackers['double'] = function (c)
         n = 0
     elseif mant == 0 and expo == 0x7FF then
         n = sign * huge
+    elseif mant == 0x8000000000000 and expo == 0x7FF then
+        n = 0/0
     else
         n = sign * ldexp(1 + mant / 0x10000000000000, expo - 0x3FF)
     end
