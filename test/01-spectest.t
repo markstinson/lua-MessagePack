@@ -62,7 +62,7 @@ local data = {
     { {"a"} },          "[[\"a\"]]",
 }
 
-plan(3 * #data / 2)
+plan(3 * #data)
 
 -- see http://github.com/msgpack/msgpack/blob/master/test/cases_gen.rb
 local source = [===[
@@ -144,7 +144,6 @@ end
 local f = io.open('cases.mpac', 'w')
 f:write(mpac)
 f:close()
-
 local i = 1
 local f = io.open('cases.mpac', 'r')
 for _, val in mp.unpacker(f) do
@@ -156,5 +155,37 @@ for _, val in mp.unpacker(f) do
     i = i + 2
 end
 f:close()
-
 os.remove 'cases.mpac'  -- clean up
+
+mp.set_integer'unsigned'
+local i = 1
+for _, val in mp.unpacker(mpac) do
+    if type(val) == 'table' then
+        is_deeply(mp.unpack(mp.pack(data[i])), data[i], "unpack/pack " .. data[i+1])
+    else
+        is(mp.unpack(mp.pack(data[i])), data[i], "unpack/pack " .. data[i+1])
+    end
+    i = i + 2
+end
+
+mp.set_number'float'
+local i = 1
+for _, val in mp.unpacker(mpac) do
+    if type(val) == 'table' then
+        is_deeply(mp.unpack(mp.pack(data[i])), data[i], "unpack/pack " .. data[i+1])
+    else
+        is(mp.unpack(mp.pack(data[i])), data[i], "unpack/pack " .. data[i+1])
+    end
+    i = i + 2
+end
+
+mp.set_number'integer'
+local i = 1
+for _, val in mp.unpacker(mpac) do
+    if type(val) == 'table' then
+        is_deeply(mp.unpack(mp.pack(data[i])), data[i], "unpack/pack " .. data[i+1])
+    else
+        is(mp.unpack(mp.pack(data[i])), data[i], "unpack/pack " .. data[i+1])
+    end
+    i = i + 2
+end

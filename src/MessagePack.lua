@@ -267,7 +267,7 @@ local set_integer = function (integer)
     elseif integer == 'signed' then
         packers['integer'] = packers['signed']
     else
-        argerror ('set_integer', 1, "invalid option '" .. integer .."'")
+        argerror('set_integer', 1, "invalid option '" .. integer .."'")
     end
 end
 m.set_integer = set_integer
@@ -350,7 +350,7 @@ local set_number = function (number)
             end
         end
     else
-        argerror ('set_number', 1, "invalid option '" .. number .."'")
+        argerror('set_number', 1, "invalid option '" .. number .."'")
     end
 end
 m.set_number = set_number
@@ -752,6 +752,11 @@ function m.unpacker (f)
             end
         end
     else
+        local read
+        local r = pcall(function () read = f.read end)
+        if not r or not read then
+            argerror('unpacker', 1, "no method 'read'")
+        end
         local cursor = {
             s = '',
             i = 1,
