@@ -478,10 +478,12 @@ unpackers['float'] = function (c)
     local n
     if mant == 0 and expo == 0 then
         n = 0
-    elseif mant == 0 and expo == 0xFF then
-        n = sign * huge
-    elseif mant == 0x80000 and expo == 0xFF then
-        n = 0/0
+    elseif expo == 0xFF then
+        if mant == 0 then
+            n = sign * huge
+        else
+            n = 0/0
+        end
     else
         n = sign * ldexp(1 + mant / 0x800000, expo - 0x7F)
     end
@@ -507,10 +509,12 @@ unpackers['double'] = function (c)
     local n
     if mant == 0 and expo == 0 then
         n = 0
-    elseif mant == 0 and expo == 0x7FF then
-        n = sign * huge
-    elseif mant == 0x8000000000000 and expo == 0x7FF then
-        n = 0/0
+    elseif expo == 0x7FF then
+        if mant == 0 then
+            n = sign * huge
+        else
+            n = 0/0
+        end
     else
         n = sign * ldexp(1 + mant / 0x10000000000000, expo - 0x3FF)
     end
