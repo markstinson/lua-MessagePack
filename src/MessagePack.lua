@@ -7,13 +7,30 @@ if not r then
     jit = nil
 end
 
-local SIZEOF_NUMBER = 8
+local r, ffi = pcall(require, 'ffi')
+if not r then
+    ffi = nil
+end
+
+local LITTLE_ENDIAN
+local SIZEOF_NUMBER
 local NUMBER_INTEGRAL = false
-if not jit then
+if jit then
+    if ffi then
+        -- LuaJIT 2
+        LITTLE_ENDIAN = ffi.abi'le'
+        SIZEOF_NUMBER = ffi.sizeof'double'
+    else
+        -- LuaJIT 1 supports only x86
+        LITTLE_ENDIAN = true
+        SIZEOF_NUMBER = 8
+    end
+else
     -- Lua 5.1 & 5.2
     local loadstring = loadstring or load
     local luac = string.dump(loadstring "a = 1")
     local header = { luac:sub(1, 12):byte(1, 12) }
+    LITTLE_ENDIAN = 1 == header[7]
     SIZEOF_NUMBER = header[11]
     NUMBER_INTEGRAL = 1 == header[12]
 end
@@ -282,61 +299,89 @@ local set_integer = function (integer)
 end
 m.set_integer = set_integer
 
-packers['float'] = function (buffer, n)
-    if n ~= n then      -- nan
-        buffer[#buffer+1] = char(0xCA,
-                                 0xFF, 0x88, 0x00, 0x00)
-    elseif n == huge then
-        buffer[#buffer+1] = char(0xCA,
-                                 0x7F, 0x80, 0x00, 0x00)
-    elseif n == -huge then
-        buffer[#buffer+1] = char(0xCA,
-                                 0xFF, 0x80, 0x00, 0x00)
-    else
-        local sign = 0
-        if n < 0 then
-            sign = 0x80
-            n = -n
-        end
-        local mant, expo = frexp(n)
-        mant = (mant * 2 - 1) * ldexp(0.5, 24)
-        expo = expo + 0x7E
-        buffer[#buffer+1] = char(0xCA,
-                                 sign + floor(expo / 0x2),
-                                 (expo % 0x2) * 0x80 + floor(mant / 0x10000),
-                                 floor(mant / 0x100) % 0x100,
-                                 mant % 0x100)
-    end
-end
+if ffi then
+    local ct_float = ffi.typeof'float *'
+    local ct_double = ffi.typeof'double *'
+    local buf = ffi.new'unsigned char[8]'
 
-packers['double'] = function (buffer, n)
-    if n ~= n then      -- nan
-        buffer[#buffer+1] = char(0xCB,
-                                 0xFF, 0xF8, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00)
-    elseif n == huge then
-        buffer[#buffer+1] = char(0xCB,
-                                 0x7F, 0xF0, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00)
-    elseif n == -huge then
-        buffer[#buffer+1] = char(0xCB,
-                                 0xFF, 0xF0, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00)
-    else
-        local sign = 0
-        if n < 0 then
-            sign = 0x80
-            n = -n
+    if LITTLE_ENDIAN then
+        packers['float'] = function (buffer, n)
+            ffi.cast(ct_float, buf)[0] = n
+            buffer[#buffer+1] = char(0xCA) .. ffi.string(buf, 4):reverse()
         end
-        local mant, expo = frexp(n)
-        mant = (mant * 2 - 1) * ldexp(0.5, 53)
-        expo = expo + 0x3FE
-        buffer[#buffer+1] = char(0xCB,
-                                 sign + floor(expo / 0x10),
-                                 (expo % 0x10) * 0x10 + floor(mant / 0x1000000000000),
-                                 floor(mant / 0x10000000000) % 0x100,
-                                 floor(mant / 0x100000000) % 0x100,
-                                 floor(mant / 0x1000000) % 0x100,
-                                 floor(mant / 0x10000) % 0x100,
-                                 floor(mant / 0x100) % 0x100,
-                                 mant % 0x100)
+
+        packers['double'] = function (buffer, n)
+            ffi.cast(ct_double, buf)[0] = n
+            buffer[#buffer+1] = char(0xCB) .. ffi.string(buf, 8):reverse()
+        end
+    else
+        packers['float'] = function (buffer, n)
+            ffi.cast(ct_float, buf)[0] = n
+            buffer[#buffer+1] = char(0xCA) .. ffi.string(buf, 4)
+        end
+
+        packers['double'] = function (buffer, n)
+            ffi.cast(ct_double, buf)[0] = n
+            buffer[#buffer+1] = char(0xCB) .. ffi.string(buf, 8)
+        end
+    end
+else
+    packers['float'] = function (buffer, n)
+        if n ~= n then      -- nan
+            buffer[#buffer+1] = char(0xCA,
+                                     0xFF, 0x88, 0x00, 0x00)
+        elseif n == huge then
+            buffer[#buffer+1] = char(0xCA,
+                                     0x7F, 0x80, 0x00, 0x00)
+        elseif n == -huge then
+            buffer[#buffer+1] = char(0xCA,
+                                     0xFF, 0x80, 0x00, 0x00)
+        else
+            local sign = 0
+            if n < 0 then
+                sign = 0x80
+                n = -n
+            end
+            local mant, expo = frexp(n)
+            mant = (mant * 2 - 1) * ldexp(0.5, 24)
+            expo = expo + 0x7E
+            buffer[#buffer+1] = char(0xCA,
+                                     sign + floor(expo / 0x2),
+                                     (expo % 0x2) * 0x80 + floor(mant / 0x10000),
+                                     floor(mant / 0x100) % 0x100,
+                                     mant % 0x100)
+        end
+    end
+
+    packers['double'] = function (buffer, n)
+        if n ~= n then      -- nan
+            buffer[#buffer+1] = char(0xCB,
+                                     0xFF, 0xF8, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00)
+        elseif n == huge then
+            buffer[#buffer+1] = char(0xCB,
+                                     0x7F, 0xF0, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00)
+        elseif n == -huge then
+            buffer[#buffer+1] = char(0xCB,
+                                     0xFF, 0xF0, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00)
+        else
+            local sign = 0
+            if n < 0 then
+                sign = 0x80
+                n = -n
+            end
+            local mant, expo = frexp(n)
+            mant = (mant * 2 - 1) * ldexp(0.5, 53)
+            expo = expo + 0x3FE
+            buffer[#buffer+1] = char(0xCB,
+                                     sign + floor(expo / 0x10),
+                                     (expo % 0x10) * 0x10 + floor(mant / 0x1000000000000),
+                                     floor(mant / 0x10000000000) % 0x100,
+                                     floor(mant / 0x100000000) % 0x100,
+                                     floor(mant / 0x1000000) % 0x100,
+                                     floor(mant / 0x10000) % 0x100,
+                                     floor(mant / 0x100) % 0x100,
+                                     mant % 0x100)
+        end
     end
 end
 
@@ -460,66 +505,118 @@ unpackers['true'] = function ()
     return true
 end
 
-unpackers['float'] = function (c)
-    local s, i, j = c.s, c.i, c.j
-    if i+3 > j then
-        c:underflow(i+3)
-        s, i, j = c.s, c.i, c.j
-    end
-    local b1, b2, b3, b4 = s:sub(i, i+3):byte(1, 4)
-    local sign = b1 > 0x7F
-    local expo = (b1 % 0x80) * 0x2 + floor(b2 / 0x80)
-    local mant = ((b2 % 0x80) * 0x100 + b3) * 0x100 + b4
-    if sign then
-        sign = -1
-    else
-        sign = 1
-    end
-    local n
-    if mant == 0 and expo == 0 then
-        n = 0
-    elseif expo == 0xFF then
-        if mant == 0 then
-            n = sign * huge
-        else
-            n = 0/0
-        end
-    else
-        n = sign * ldexp(1 + mant / 0x800000, expo - 0x7F)
-    end
-    c.i = i+4
-    return n
-end
+if ffi then
+    local ct_float = ffi.typeof'float *'
+    local ct_double = ffi.typeof'double *'
+    local buf = ffi.new'unsigned char[8]'
 
-unpackers['double'] = function (c)
-    local s, i, j = c.s, c.i, c.j
-    if i+7 > j then
-        c:underflow(i+7)
-        s, i, j = c.s, c.i, c.j
-    end
-    local b1, b2, b3, b4, b5, b6, b7, b8 = s:sub(i, i+7):byte(1, 8)
-    local sign = b1 > 0x7F
-    local expo = (b1 % 0x80) * 0x10 + floor(b2 / 0x10)
-    local mant = ((((((b2 % 0x10) * 0x100 + b3) * 0x100 + b4) * 0x100 + b5) * 0x100 + b6) * 0x100 + b7) * 0x100 + b8
-    if sign then
-        sign = -1
-    else
-        sign = 1
-    end
-    local n
-    if mant == 0 and expo == 0 then
-        n = 0
-    elseif expo == 0x7FF then
-        if mant == 0 then
-            n = sign * huge
-        else
-            n = 0/0
+    if LITTLE_ENDIAN then
+        unpackers['float'] = function(c)
+            local s, i, j = c.s, c.i, c.j
+            if i+3 > j then
+                c:underflow(i+3)
+                s, i, j = c.s, c.i, c.j
+            end
+            buf = s:sub(i, i+3):reverse()
+            c.i = i+4
+            return ffi.cast(ct_float, buf)[0]
+        end
+
+        unpackers['double'] = function(c)
+            local s, i, j = c.s, c.i, c.j
+            if i+7 > j then
+                c:underflow(i+7)
+                s, i, j = c.s, c.i, c.j
+            end
+            buf = s:sub(i, i+7):reverse()
+            c.i = i+8
+            return ffi.cast(ct_double, buf)[0]
         end
     else
-        n = sign * ldexp(1 + mant / 0x10000000000000, expo - 0x3FF)
+        unpackers['float'] = function(c)
+            local s, i, j = c.s, c.i, c.j
+            if i+3 > j then
+                c:underflow(i+3)
+                s, i, j = c.s, c.i, c.j
+            end
+            buf = s:sub(i, i+3)
+            c.i = i+4
+            return ffi.cast(ct_float, buf)[0]
+        end
+
+        unpackers['double'] = function(c)
+            local s, i, j = c.s, c.i, c.j
+            if i+7 > j then
+                c:underflow(i+7)
+                s, i, j = c.s, c.i, c.j
+            end
+            buf = s:sub(i, i+7)
+            c.i = i+8
+            return ffi.cast(ct_double, buf)[0]
+        end
     end
-    c.i = i+8
-    return n
+else
+    unpackers['float'] = function (c)
+        local s, i, j = c.s, c.i, c.j
+        if i+3 > j then
+            c:underflow(i+3)
+            s, i, j = c.s, c.i, c.j
+        end
+        local b1, b2, b3, b4 = s:sub(i, i+3):byte(1, 4)
+        local sign = b1 > 0x7F
+        local expo = (b1 % 0x80) * 0x2 + floor(b2 / 0x80)
+        local mant = ((b2 % 0x80) * 0x100 + b3) * 0x100 + b4
+        if sign then
+            sign = -1
+        else
+            sign = 1
+        end
+        local n
+        if mant == 0 and expo == 0 then
+            n = 0
+        elseif expo == 0xFF then
+            if mant == 0 then
+                n = sign * huge
+            else
+                n = 0/0
+            end
+        else
+            n = sign * ldexp(1 + mant / 0x800000, expo - 0x7F)
+        end
+        c.i = i+4
+        return n
+    end
+
+    unpackers['double'] = function (c)
+        local s, i, j = c.s, c.i, c.j
+        if i+7 > j then
+            c:underflow(i+7)
+            s, i, j = c.s, c.i, c.j
+        end
+        local b1, b2, b3, b4, b5, b6, b7, b8 = s:sub(i, i+7):byte(1, 8)
+        local sign = b1 > 0x7F
+        local expo = (b1 % 0x80) * 0x10 + floor(b2 / 0x10)
+        local mant = ((((((b2 % 0x10) * 0x100 + b3) * 0x100 + b4) * 0x100 + b5) * 0x100 + b6) * 0x100 + b7) * 0x100 + b8
+        if sign then
+            sign = -1
+        else
+            sign = 1
+        end
+        local n
+        if mant == 0 and expo == 0 then
+            n = 0
+        elseif expo == 0x7FF then
+            if mant == 0 then
+                n = sign * huge
+            else
+                n = 0/0
+            end
+        else
+            n = sign * ldexp(1 + mant / 0x10000000000000, expo - 0x3FF)
+        end
+        c.i = i+8
+        return n
+    end
 end
 
 unpackers['fixnum_pos'] = function (c, val)
