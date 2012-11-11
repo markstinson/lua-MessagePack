@@ -9,6 +9,10 @@ Introduction
 
 It lets you exchange data among multiple languages like JSON but it's faster and smaller.
 
+It's a pure Lua implementation, without dependency.
+
+And it's really fast with LuaJIT.
+
 Links
 -----
 
