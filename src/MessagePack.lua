@@ -210,7 +210,7 @@ packers['unsigned'] = function (buffer, n)
                                      floor(n / 0x10000) % 0x100,
                                      floor(n / 0x100) % 0x100,
                                      n % 0x100)
-      end
+        end
     end
 end
 
@@ -267,7 +267,7 @@ packers['signed'] = function (buffer, n)
                                      floor(n / 0x10000) % 0x100,
                                      floor(n / 0x100) % 0x100,
                                      n % 0x100)
-      end
+        end
     end
 end
 
