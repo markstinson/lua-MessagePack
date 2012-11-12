@@ -86,6 +86,31 @@ The default is <em>usually</em> <code>double</code>.</p>
 The valid options are <code>signed</code> and <code>unsigned</code>.
 The default is <code>signed</code>.</p>
 
+<h3>Data Conversion</h3>
+
+<ul>
+  <li>A <strong>Lua</strong> <code>number</code> is converted into an <code>integer</code>
+  if <code>math.floor(number) == number</code>,
+  otherwise it is converted into the <strong>MessagePack</strong>
+  <code>float</code> or <code>double</code>.</li>
+
+  <li>When a <strong>MessagePack</strong> 64 bits <code>integer</code> is converted
+  to a <strong>Lua</strong> <code>number</code>
+  it is possible that the resulting number will not represent the original number
+  but just an approximation.</li>
+
+  <li>A Lua <code>table</code> is converted into a <strong>MessagePack</strong> <code>array</code>
+  only if <em>all</em> the keys are composed of incrementing integers
+  starting at 1 end ending at <em>N</em>, without holes, without additional non numerical keys.
+  Otherwise it is converted into <strong>MessagePack</strong> <code>map</code>.</li>
+
+  <li>An empty <code>table</code> is always converted
+  into a <strong>MessagePack</strong> <code>array</code>.</li>
+
+  <li>LIMITATION : <strong>MessagePack</strong> cannot handle
+  data with <em>cyclic reference</em>.</li>
+</ul>
+
 <h2><a name="examples"></a>Examples</h2>
 
 <pre class="example">
