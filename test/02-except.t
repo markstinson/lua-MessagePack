@@ -2,9 +2,24 @@
 
 require 'Test.More'
 
-plan(12)
+plan(15)
 
 local mp = require 'MessagePack'
+
+error_like( function ()
+                mp.pack( print )
+            end,
+            "pack 'function' is unimplemented" )
+
+error_like( function ()
+                mp.pack( coroutine.create(plan) )
+            end,
+            "pack 'thread' is unimplemented" )
+
+error_like( function ()
+                mp.pack( io.stdin )
+            end,
+            "pack 'userdata' is unimplemented" )
 
 is( mp.unpack(mp.pack("text")), "text" )
 
