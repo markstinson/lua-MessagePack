@@ -2,7 +2,7 @@
 
 require 'Test.More'
 
-plan(15)
+plan(17)
 
 local mp = require 'MessagePack'
 
@@ -20,6 +20,24 @@ error_like( function ()
                 mp.pack( io.stdin )
             end,
             "pack 'userdata' is unimplemented" )
+
+error_like( function ()
+                local a = {}
+                a.foo = a
+                mp.pack( a )
+            end,
+            "stack overflow",   -- from Lua interpreter
+            "direct cycle" )
+
+error_like( function ()
+                local a = {}
+                local b = {}
+                a.foo = b
+                b.foo = a
+                mp.pack( a )
+            end,
+            "stack overflow",   -- from Lua interpreter
+            "indirect cycle" )
 
 is( mp.unpack(mp.pack("text")), "text" )
 
