@@ -571,7 +571,7 @@ unpackers['uint64'] = function (c)
 end
 
 unpackers['fixnum_neg'] = function (c, val)
-    return val % 0x20 - 0x20
+    return val - 0x100
 end
 
 unpackers['int8'] = function (c)
