@@ -184,7 +184,7 @@ packers['unsigned'] = function (buffer, n)
         end
     else
         if n >= -0x20 then
-            buffer[#buffer+1] = char(0xE0 + 0x20 + n)   -- fixnum_neg
+            buffer[#buffer+1] = char(0x100 + n) -- fixnum_neg
         elseif n >= -0x80 then
             buffer[#buffer+1] = char(0xD0,      -- int8
                                      0x100 + n)
