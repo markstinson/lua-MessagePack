@@ -89,6 +89,10 @@ The default is <code>'signed'</code>.</p>
 <h3>Data Conversion</h3>
 
 <ul>
+  <li>The following <strong>Lua</strong> types could be converted :
+  <code>nil</code>, <code>boolean</code>, <code>number</code>,
+  <code>string</code> and <code>table</code>.</li>
+
   <li>A <strong>Lua</strong> <code>number</code> is converted into an <code>integer</code>
   if <code>math.floor(number) == number</code>,
   otherwise it is converted into the <strong>MessagePack</strong>
