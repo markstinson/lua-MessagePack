@@ -144,9 +144,29 @@ end
 local f = io.open('cases.mpac', 'w')
 f:write(mpac)
 f:close()
+local r, ltn12 = pcall(require, 'ltn12')        -- from LuaSocket
+if not r then
+    ltn12 = { source = {} }
+
+    function ltn12.source.file (handle)
+        if handle then
+            return function ()
+                local chunk = handle:read(4096)
+                if not chunk then
+                    handle:close()
+                end
+                return chunk
+            end
+        else return function ()
+                return nil, "unable to open file"
+            end
+        end
+    end
+end
 local i = 1
 local f = io.open('cases.mpac', 'r')
-for _, val in mp.unpacker(f) do
+local s = ltn12.source.file(f)
+for _, val in mp.unpacker(s) do
     if type(val) == 'table' then
         is_deeply(val, data[i], "reference   " .. data[i+1])
     else
@@ -154,7 +174,6 @@ for _, val in mp.unpacker(f) do
     end
     i = i + 2
 end
-f:close()
 os.remove 'cases.mpac'  -- clean up
 
 mp.set_integer'unsigned'

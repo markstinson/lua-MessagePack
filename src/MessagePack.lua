@@ -769,12 +769,7 @@ function m.unpacker (f)
                 return cursor.i, unpackers['any'](cursor)
             end
         end
-    else
-        local read
-        local r = pcall(function () read = f.read end)
-        if not r or not read then
-            argerror('unpacker', 1, "no method 'read'")
-        end
+    elseif type(f) == 'function' then
         local cursor = {
             s = '',
             i = 1,
@@ -785,11 +780,11 @@ function m.unpacker (f)
                             self.i = 1
                             self.j = 0
                             while e > self.j do
-                                local readen = f:read(4096)
-                                if not readen then
+                                local chunk = f()
+                                if not chunk then
                                     error "missing bytes"
                                 end
-                                self.s = self.s .. readen
+                                self.s = self.s .. chunk
                                 self.j = #self.s
                             end
                         end,
@@ -802,6 +797,8 @@ function m.unpacker (f)
                 return true, unpackers['any'](cursor)
             end
         end
+    else
+        argerror('unpacker', 1, "string or function expected, got " .. type(f))
     end
 end
 

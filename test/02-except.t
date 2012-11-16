@@ -59,12 +59,12 @@ error_like( function ()
 error_like( function ()
                 mp.unpacker( false )
             end,
-            "bad argument #1 to unpacker %(no method 'read'%)" )
+            "bad argument #1 to unpacker %(string or function expected, got boolean%)" )
 
 error_like( function ()
                 mp.unpacker( {} )
             end,
-            "bad argument #1 to unpacker %(no method 'read'%)" )
+            "bad argument #1 to unpacker %(string or function expected, got table%)" )
 
 for _, val in mp.unpacker(string.rep(mp.pack("text"), 2)) do
     is( val, "text" )
