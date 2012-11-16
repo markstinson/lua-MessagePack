@@ -68,10 +68,11 @@
 
 <p>Deserialize a <code>string</code>.</p>
 
-<h4><code>unpacker( stream )</code></h4>
+<h4><code>unpacker( src )</code></h4>
 
-<p>Accept a <code>string</code> or an <em>object</em> which has a method <code>read</code>,
-like a <code>file</code> and returns a iterator.</p>
+<p>Accept a <code>string</code> or a
+<a href="http://w3.impa.br/~diego/software/luasocket/ltn12.html#source"><code>ltn12.source</code></a>
+ and returns a iterator.</p>
 <p>The iterator gives a couple of values, the <em>interesting</em> value is the second.</p>
 
 <h4><code>set_number( str )</code></h4>
@@ -126,11 +127,11 @@ mp.set_integer'unsigned'
 mpac = mp.pack(data)
 data = mp.unpack(mpac)
 
-f = io.open('file', 'r')
-for _, v in mp.unpacker(f) do
+local ltn12 = require 'ltn12'
+src = ltn12.source.file(io.open('file', 'r'))
+for _, v in mp.unpacker(src) do
     print(v)
 end
-f:close()
 </pre>
 
 </div> <!-- id="content" -->
