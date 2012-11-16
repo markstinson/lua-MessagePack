@@ -754,12 +754,12 @@ function m.unpack (s)
     return data
 end
 
-function m.unpacker (f)
-    if type(f) == 'string' then
+function m.unpacker (src)
+    if type(src) == 'string' then
         local cursor = {
-            s = f,
+            s = src,
             i = 1,
-            j = #f,
+            j = #src,
             underflow = function (self)
                             error "missing bytes"
                         end,
@@ -769,7 +769,7 @@ function m.unpacker (f)
                 return cursor.i, unpackers['any'](cursor)
             end
         end
-    elseif type(f) == 'function' then
+    elseif type(src) == 'function' then
         local cursor = {
             s = '',
             i = 1,
@@ -780,7 +780,7 @@ function m.unpacker (f)
                             self.i = 1
                             self.j = 0
                             while e > self.j do
-                                local chunk = f()
+                                local chunk = src()
                                 if not chunk then
                                     error "missing bytes"
                                 end
@@ -798,7 +798,7 @@ function m.unpacker (f)
             end
         end
     else
-        argerror('unpacker', 1, "string or function expected, got " .. type(f))
+        argerror('unpacker', 1, "string or function expected, got " .. type(src))
     end
 end
 
