@@ -431,8 +431,7 @@ local function unpack_map (c, n)
     local decode = unpackers['any']
     while n > 0 do
         local k = decode(c)
-        local v = decode(c)
-        t[k] = v
+        t[k] = decode(c)
         n = n-1
     end
     return t
