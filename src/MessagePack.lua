@@ -811,7 +811,7 @@ else
     set_number'double'
 end
 
-m._VERSION = "0.1.0"
+m._VERSION = "0.2.0"
 m._DESCRIPTION = "lua-MessagePack : a pure Lua implementation"
 m._COPYRIGHT = "Copyright (c) 2012 Francois Perrad"
 return m
