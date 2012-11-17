@@ -146,6 +146,7 @@ f:write(mpac)
 f:close()
 local r, ltn12 = pcall(require, 'ltn12')        -- from LuaSocket
 if not r then
+    diag "ltn12.source.file emulated"
     ltn12 = { source = {} }
 
     function ltn12.source.file (handle)
