@@ -418,9 +418,9 @@ m.unpackers = unpackers
 
 local function unpack_array (c, n)
     local t = {}
-    local f = unpackers['any']
+    local decode = unpackers['any']
     while n > 0 do
-        t[#t+1] = f(c)
+        t[#t+1] = decode(c)
         n = n-1
     end
     return t
@@ -428,10 +428,10 @@ end
 
 local function unpack_map (c, n)
     local t = {}
-    local f = unpackers['any']
+    local decode = unpackers['any']
     while n > 0 do
-        local k = f(c)
-        local v = f(c)
+        local k = decode(c)
+        local v = decode(c)
         t[k] = v
         n = n-1
     end
