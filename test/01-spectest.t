@@ -151,7 +151,7 @@ if not r then
     function ltn12.source.file (handle)
         if handle then
             return function ()
-                local chunk = handle:read(4096)
+                local chunk = handle:read(1)
                 if not chunk then
                     handle:close()
                 end
