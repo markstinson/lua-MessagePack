@@ -420,9 +420,8 @@ m.unpackers = unpackers
 local function unpack_array (c, n)
     local t = {}
     local decode = unpackers['any']
-    while n > 0 do
-        t[#t+1] = decode(c)
-        n = n-1
+    for i = 1, n do
+        t[i] = decode(c)
     end
     return t
 end
