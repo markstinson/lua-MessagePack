@@ -32,8 +32,9 @@ local huge = require'math'.huge
 local tconcat = require'table'.concat
 
 --[[ debug only
+local format = require'string'.format
 local function hexadump (s)
-    return (s:gsub('.', function (c) return string.format('%02X ', c:byte()) end))
+    return (s:gsub('.', function (c) return format('%02X ', c:byte()) end))
 end
 --]]
 
