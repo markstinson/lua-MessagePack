@@ -113,45 +113,53 @@ packers['table'] = function (buffer, tbl)
         is_map = true
     end
     if is_map then
-        if n <= 0x0F then
-            buffer[#buffer+1] = char(0x80 + n)  -- fixmap
-        elseif n <= 0xFFFF then
-            buffer[#buffer+1] = char(0xDE,      -- map16
-                                     floor(n / 0x100),
-                                     n % 0x100)
-        elseif n <= 0xFFFFFFFF then
-            buffer[#buffer+1] = char(0xDF,      -- map32
-                                     floor(n / 0x1000000),
-                                     floor(n / 0x10000) % 0x100,
-                                     floor(n / 0x100) % 0x100,
-                                     n % 0x100)
-        else
-            error"overflow in pack 'map'"
-        end
-        for k, v in pairs(tbl) do
-            packers[type(k)](buffer, k)
-            packers[type(v)](buffer, v)
-        end
+        return packers['map'](buffer, tbl, n)
     else
-        if n <= 0x0F then
-            buffer[#buffer+1] = char(0x90 + n)  -- fixarray
-        elseif n <= 0xFFFF then
-            buffer[#buffer+1] = char(0xDC,      -- array16
-                                     floor(n / 0x100),
-                                     n % 0x100)
-        elseif n <= 0xFFFFFFFF then
-            buffer[#buffer+1] = char(0xDD,      -- array32
-                                     floor(n / 0x1000000),
-                                     floor(n / 0x10000) % 0x100,
-                                     floor(n / 0x100) % 0x100,
-                                     n % 0x100)
-        else
-            error"overflow in pack 'array'"
-        end
-        for i = 1, n do
-            local v = tbl[i]
-            packers[type(v)](buffer, v)
-        end
+        return packers['array'](buffer, tbl, n)
+    end
+end
+
+packers['map'] = function (buffer, tbl, n)
+    if n <= 0x0F then
+        buffer[#buffer+1] = char(0x80 + n)      -- fixmap
+    elseif n <= 0xFFFF then
+        buffer[#buffer+1] = char(0xDE,          -- map16
+                                 floor(n / 0x100),
+                                 n % 0x100)
+    elseif n <= 0xFFFFFFFF then
+        buffer[#buffer+1] = char(0xDF,          -- map32
+                                 floor(n / 0x1000000),
+                                 floor(n / 0x10000) % 0x100,
+                                 floor(n / 0x100) % 0x100,
+                                 n % 0x100)
+    else
+        error"overflow in pack 'map'"
+    end
+    for k, v in pairs(tbl) do
+        packers[type(k)](buffer, k)
+        packers[type(v)](buffer, v)
+    end
+end
+
+packers['array'] = function (buffer, tbl, n)
+    if n <= 0x0F then
+        buffer[#buffer+1] = char(0x90 + n)      -- fixarray
+    elseif n <= 0xFFFF then
+        buffer[#buffer+1] = char(0xDC,          -- array16
+                                 floor(n / 0x100),
+                                 n % 0x100)
+    elseif n <= 0xFFFFFFFF then
+        buffer[#buffer+1] = char(0xDD,          -- array32
+                                 floor(n / 0x1000000),
+                                 floor(n / 0x10000) % 0x100,
+                                 floor(n / 0x100) % 0x100,
+                                 n % 0x100)
+    else
+        error"overflow in pack 'array'"
+    end
+    for i = 1, n do
+        local v = tbl[i]
+        packers[type(v)](buffer, v)
     end
 end
 
