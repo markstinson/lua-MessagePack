@@ -87,6 +87,12 @@ The default is <em>usually</em> <code>'double'</code>.</p>
 The valid options are <code>'signed'</code> and <code>'unsigned'</code>.
 The default is <code>'signed'</code>.</p>
 
+<h4><code>set_array( str )</code></h4>
+
+<p>Configures the behaviour of <code>pack</code>.
+The valid options are <code>'without_hole'</code> and <code>'with_hole'</code>.
+The default is <code>'without_hole'</code>.</p>
+
 <h3>Data Conversion</h3>
 
 <ul>
@@ -95,9 +101,9 @@ The default is <code>'signed'</code>.</p>
   <code>string</code> and <code>table</code>.</li>
 
   <li>A <strong>Lua</strong> <code>number</code> is converted into an <code>integer</code>
-  if <code>math.floor(number) == number</code>,
+  if <code>math.floor(num) == num</code>,
   otherwise it is converted into the <strong>MessagePack</strong>
-  <code>float</code> or <code>double</code>.</li>
+  <code>float</code> or <code>double</code> (see <code>set_number</code>).</li>
 
   <li>When a <strong>MessagePack</strong> 64 bits <code>integer</code> is converted
   to a <strong>Lua</strong> <code>number</code>
@@ -105,8 +111,8 @@ The default is <code>'signed'</code>.</p>
   but just an approximation.</li>
 
   <li>A Lua <code>table</code> is converted into a <strong>MessagePack</strong> <code>array</code>
-  only if <em>all</em> the keys are composed of incrementing integers
-  starting at 1 end ending at <em>N</em>, without holes, without additional non numerical keys.
+  only if <em>all</em> the keys are composed of positive integers greater than 1,
+  without hole or with holes (see <code>set_array</code>).
   Otherwise it is converted into <strong>MessagePack</strong> <code>map</code>.</li>
 
   <li>An empty <code>table</code> is always converted
@@ -123,6 +129,7 @@ local mp = require 'MessagePack'
 
 mp.set_number'float'
 mp.set_integer'unsigned'
+mp.set_array'with_hole'
 
 mpac = mp.pack(data)
 data = mp.unpack(mpac)
