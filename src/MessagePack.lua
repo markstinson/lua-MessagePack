@@ -845,7 +845,7 @@ else
 end
 set_array'without_hole'
 
-m._VERSION = "0.2.0"
+m._VERSION = "0.2.1"
 m._DESCRIPTION = "lua-MessagePack : a pure Lua implementation"
 m._COPYRIGHT = "Copyright (c) 2012 Francois Perrad"
 return m
