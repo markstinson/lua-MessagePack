@@ -2,7 +2,7 @@
 
 require 'Test.More'
 
-plan(17)
+plan(18)
 
 local mp = require 'MessagePack'
 
@@ -86,3 +86,9 @@ error_like( function ()
                 mp.set_integer'bad'
             end,
             "bad argument #1 to set_integer %(invalid option 'bad'%)" )
+
+error_like( function ()
+                mp.set_array'bad'
+            end,
+            "bad argument #1 to set_array %(invalid option 'bad'%)" )
+

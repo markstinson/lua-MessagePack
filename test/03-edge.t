@@ -2,7 +2,7 @@
 
 require 'Test.More'
 
-plan(11)
+plan(15)
 
 local mp = require 'MessagePack'
 
@@ -27,3 +27,12 @@ is( t.d, 4 )
 t = mp.unpack(mp.pack(t))
 is( t.b, 2 )
 is( t.d, nil, "don't follow metatable" )
+
+local t = { 10, 20, nil, 40 }
+mp.set_array'without_hole'
+is( mp.pack(t):byte(), 0x80 + 3, "array with hole as map" )
+is_deeply( mp.unpack(mp.pack(t)), t )
+mp.set_array'with_hole'
+is( mp.pack(t):byte(), 0x90 + 4, "array with hole as array" )
+is_deeply( mp.unpack(mp.pack(t)), t )
+

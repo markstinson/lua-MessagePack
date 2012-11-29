@@ -1,5 +1,8 @@
 Revision history for lua-MessagePack
 
+0.2.1
+	add set_array
+
 0.2.0  Sat Nov 17 15:30:00 2012
 	INCOMPATIBILITY : now, unpacker accepts a ltn12.source instead of a file
 

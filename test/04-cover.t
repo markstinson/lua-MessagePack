@@ -43,10 +43,10 @@ is_deeply( mp.unpack(mp.pack(t)), t, "#t 2^3" )
 t = { string.rep('x', 2^9):byte(1, -1) }
 is_deeply( mp.unpack(mp.pack(t)), t, "#t 2^9" )
 
-h = { string.rep('x', 2^3):byte(1, -1) }
-h[2] = nil
+h = {}
+for i = 1, 2^3 do h[10*i] = i end
 is_deeply( mp.unpack(mp.pack(h)), h, "#h 2^3" )
-h = { string.rep('x', 2^9):byte(1, -1) }
-h[2] = nil
+h = {}
+for i = 1, 2^9 do h[10*i] = i end
 is_deeply( mp.unpack(mp.pack(h)), h, "#h 2^9" )
 

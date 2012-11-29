@@ -97,28 +97,6 @@ packers['string'] = function (buffer, str)
     buffer[#buffer+1] = str
 end
 
-packers['table'] = function (buffer, tbl)
-    local is_map, n, max = false, 0, 0
-    for k in pairs(tbl) do
-        if type(k) == 'number' and k > 0 then
-            if k > max then
-                max = k
-            end
-        else
-            is_map = true
-        end
-        n = n + 1
-    end
-    if max ~= n then    -- there are holes
-        is_map = true
-    end
-    if is_map then
-        return packers['map'](buffer, tbl, n)
-    else
-        return packers['array'](buffer, tbl, n)
-    end
-end
-
 packers['map'] = function (buffer, tbl, n)
     if n <= 0x0F then
         buffer[#buffer+1] = char(0x80 + n)      -- fixmap
@@ -162,6 +140,54 @@ packers['array'] = function (buffer, tbl, n)
         packers[type(v)](buffer, v)
     end
 end
+
+local set_array = function (array)
+    if array == 'without_hole' then
+        packers['table'] = function (buffer, tbl)
+            local is_map, n, max = false, 0, 0
+            for k in pairs(tbl) do
+                if type(k) == 'number' and k > 0 then
+                    if k > max then
+                        max = k
+                    end
+                else
+                    is_map = true
+                end
+                n = n + 1
+            end
+            if max ~= n then    -- there are holes
+                is_map = true
+            end
+            if is_map then
+                return packers['map'](buffer, tbl, n)
+            else
+                return packers['array'](buffer, tbl, n)
+            end
+        end
+    elseif array == 'with_hole' then
+        packers['table'] = function (buffer, tbl)
+            local is_map, n, max = false, 0, 0
+            for k in pairs(tbl) do
+                if type(k) == 'number' and k > 0 then
+                    if k > max then
+                        max = k
+                    end
+                else
+                    is_map = true
+                end
+                n = n + 1
+            end
+            if is_map then
+                return packers['map'](buffer, tbl, n)
+            else
+                return packers['array'](buffer, tbl, max)
+            end
+        end
+    else
+        argerror('set_array', 1, "invalid option '" .. array .."'")
+    end
+end
+m.set_array = set_array
 
 packers['unsigned'] = function (buffer, n)
     if n >= 0 then
@@ -817,6 +843,7 @@ elseif SIZEOF_NUMBER == 4 then
 else
     set_number'double'
 end
+set_array'without_hole'
 
 m._VERSION = "0.2.0"
 m._DESCRIPTION = "lua-MessagePack : a pure Lua implementation"
