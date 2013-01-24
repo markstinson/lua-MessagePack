@@ -2,7 +2,7 @@
 
 require 'Test.More'
 
-plan(15)
+plan(24)
 
 local mp = require 'MessagePack'
 
@@ -35,4 +35,20 @@ is_deeply( mp.unpack(mp.pack(t)), t )
 mp.set_array'with_hole'
 is( mp.pack(t):byte(), 0x90 + 4, "array with hole as array" )
 is_deeply( mp.unpack(mp.pack(t)), t )
+
+mp.set_number'float'
+is( mp.pack(3.402824e+38), mp.pack(1/0), "float 3.402824e+38")
+is( mp.pack(7e42), mp.pack(1/0), "inf (downcast double -> float)")
+is( mp.pack(-7e42), mp.pack(-1/0), "-inf (downcast double -> float)")
+is( mp.unpack(mp.pack(7e42)), 1/0, "inf (downcast double -> float)")
+is( mp.unpack(mp.pack(-7e42)), -1/0, "-inf (downcast double -> float)")
+is( mp.unpack(mp.pack(7e-42)), 0, "epsilon (downcast double -> float)")
+is( mp.unpack(mp.pack(-7e-42)), -0, "-epsilon (downcast double -> float)")
+
+local buffer = {}
+mp.packers.float(buffer, 0)
+is( mp.unpack(table.concat(buffer)), 0)
+buffer = {}
+mp.packers.double(buffer, 0)
+is( mp.unpack(table.concat(buffer)), 0)
 

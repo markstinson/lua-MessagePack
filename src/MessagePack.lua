@@ -318,24 +318,29 @@ end
 m.set_integer = set_integer
 
 packers['float'] = function (buffer, n)
-    if n ~= n then      -- nan
-        buffer[#buffer+1] = char(0xCA,
+    local sign = 0
+    if n < 0 then
+        sign = 0x80
+        n = -n
+    end
+    local mant, expo = frexp(n)
+    if mant ~= mant then
+        buffer[#buffer+1] = char(0xCA,  -- nan
                                  0xFF, 0x88, 0x00, 0x00)
-    elseif n == huge then
-        buffer[#buffer+1] = char(0xCA,
-                                 0x7F, 0x80, 0x00, 0x00)
-    elseif n == -huge then
-        buffer[#buffer+1] = char(0xCA,
-                                 0xFF, 0x80, 0x00, 0x00)
-    else
-        local sign = 0
-        if n < 0 then
-            sign = 0x80
-            n = -n
+    elseif mant == huge or expo > 0x80 then
+        if sign == 0 then
+            buffer[#buffer+1] = char(0xCA,      -- inf
+                                     0x7F, 0x80, 0x00, 0x00)
+        else
+            buffer[#buffer+1] = char(0xCA,      -- -inf
+                                     0xFF, 0x80, 0x00, 0x00)
         end
-        local mant, expo = frexp(n)
-        mant = (mant * 2 - 1) * ldexp(0.5, 24)
+    elseif (mant == 0 and expo == 0) or expo < -0x7E then
+        buffer[#buffer+1] = char(0xCA,  -- zero
+                                 sign, 0x00, 0x00, 0x00)
+    else
         expo = expo + 0x7E
+        mant = (mant * 2 - 1) * ldexp(0.5, 24)
         buffer[#buffer+1] = char(0xCA,
                                  sign + floor(expo / 0x2),
                                  (expo % 0x2) * 0x80 + floor(mant / 0x10000),
@@ -345,24 +350,29 @@ packers['float'] = function (buffer, n)
 end
 
 packers['double'] = function (buffer, n)
-    if n ~= n then      -- nan
-        buffer[#buffer+1] = char(0xCB,
+    local sign = 0
+    if n < 0 then
+        sign = 0x80
+        n = -n
+    end
+    local mant, expo = frexp(n)
+    if mant ~= mant then
+        buffer[#buffer+1] = char(0xCB,  -- nan
                                  0xFF, 0xF8, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00)
-    elseif n == huge then
-        buffer[#buffer+1] = char(0xCB,
-                                 0x7F, 0xF0, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00)
-    elseif n == -huge then
-        buffer[#buffer+1] = char(0xCB,
-                                 0xFF, 0xF0, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00)
-    else
-        local sign = 0
-        if n < 0 then
-            sign = 0x80
-            n = -n
+    elseif mant == huge then
+        if sign == 0 then
+            buffer[#buffer+1] = char(0xCB,      -- inf
+                                     0x7F, 0xF0, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00)
+        else
+            buffer[#buffer+1] = char(0xCB,      -- -inf
+                                     0xFF, 0xF0, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00)
         end
-        local mant, expo = frexp(n)
-        mant = (mant * 2 - 1) * ldexp(0.5, 53)
+    elseif mant == 0 and expo == 0 then
+        buffer[#buffer+1] = char(0xCB,  -- zero
+                                 sign, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00)
+    else
         expo = expo + 0x3FE
+        mant = (mant * 2 - 1) * ldexp(0.5, 53)
         buffer[#buffer+1] = char(0xCB,
                                  sign + floor(expo / 0x10),
                                  (expo % 0x10) * 0x10 + floor(mant / 0x1000000000000),
@@ -380,7 +390,7 @@ local set_number = function (number)
         packers['number'] = packers['signed']
     elseif number == 'float' then
         packers['number'] = function (buffer, n)
-            if floor(n) ~= n or n ~= n or n == huge or n == -huge then
+            if floor(n) ~= n or n ~= n or n > 3.40282347e+38 or n < -3.40282347e+38 then
                 return packers['float'](buffer, n)
             else
                 return packers['integer'](buffer, n)
@@ -510,7 +520,7 @@ unpackers['float'] = function (c)
     end
     local n
     if mant == 0 and expo == 0 then
-        n = 0
+        n = sign * 0
     elseif expo == 0xFF then
         if mant == 0 then
             n = sign * huge
@@ -541,7 +551,7 @@ unpackers['double'] = function (c)
     end
     local n
     if mant == 0 and expo == 0 then
-        n = 0
+        n = sign * 0
     elseif expo == 0x7FF then
         if mant == 0 then
             n = sign * huge
