@@ -2,6 +2,8 @@
 lua-MessagePack : a pure Lua implementation
 ===========================================
 
+[![Build Status](https://travis-ci.org/fperrad/lua-MessagePack.png)](https://travis-ci.org/fperrad/lua-MessagePack)
+
 Introduction
 ------------
 

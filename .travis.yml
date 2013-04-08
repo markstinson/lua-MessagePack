@@ -1,0 +1,18 @@
+# Lua is not officially supported, but an erlang environment will do.
+language: erlang
+
+env:
+  matrix:
+    - LUA=lua5.1                LUAVER=5.1
+    - LUA=lua5.2                LUAVER=5.2
+
+# Tool setup.
+install:
+  - sudo apt-get install lua5.1
+  - sudo apt-get install lua5.2
+  - git clone git://github.com/fperrad/lua-TestMore.git
+  - sudo make -C lua-TestMore install LUAVER="$LUAVER"
+
+# Build and test.
+script:
+  - make LUA="$LUA" test
