@@ -16,3 +16,7 @@ install:
 # Build and test.
 script:
   - make LUA="$LUA" test
+
+branches:
+  only:
+    - master
