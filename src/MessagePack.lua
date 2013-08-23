@@ -81,6 +81,9 @@ packers['string'] = function (buffer, str)
     local n = #str
     if n <= 0x1F then
         buffer[#buffer+1] = char(0xA0 + n)      -- fixstr
+    elseif n <= 0xFF then
+        buffer[#buffer+1] = char(0xD9,          -- str8
+                                 n)
     elseif n <= 0xFFFF then
         buffer[#buffer+1] = char(0xDA,          -- str16
                                  floor(n / 0x100),
@@ -431,6 +434,7 @@ local types_map = setmetatable({
     [0xD1] = 'int16',
     [0xD2] = 'int32',
     [0xD3] = 'int64',
+    [0xD9] = 'str8',
     [0xDA] = 'str16',
     [0xDB] = 'str32',
     [0xDC] = 'array16',
@@ -680,6 +684,24 @@ end
 unpackers['fixstr'] = function (c, val)
     local s, i, j = c.s, c.i, c.j
     local n = val % 0x20
+    local e = i+n-1
+    if e > j then
+        c:underflow(e)
+        s, i, j = c.s, c.i, c.j
+    end
+    c.i = i+n
+    return s:sub(i, e)
+end
+
+unpackers['str8'] = function (c)
+    local s, i, j = c.s, c.i, c.j
+    if i > j then
+        c:underflow(i)
+        s, i, j = c.s, c.i, c.j
+    end
+    local n = s:sub(i, i):byte()
+    i = i+1
+    c.i = i
     local e = i+n-1
     if e > j then
         c:underflow(e)

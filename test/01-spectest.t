@@ -41,9 +41,11 @@ local data = {
     1.0,                "1.0 double",
     -1.0,               "-1.0 double",
     "a",                "\"a\" FixStr",
+    "a",                "\"a\" str 8",
     "a",                "\"a\" str 16",
     "a",                "\"a\" str 32",
     "",                 "\"\" FixStr",
+    "",                 "\"\" str 8",
     "",                 "\"\" str 16",
     "",                 "\"\" str 32",
     { 0 },              "[0] FixArray",
@@ -100,9 +102,11 @@ cb 80 00 00 00 00 00 00 00      # -0.0 double
 cb 3f f0 00 00 00 00 00 00      # 1.0 double
 cb bf f0 00 00 00 00 00 00      # -1.0 double
 a1 61                           # "a" FixStr
+d9 01 61                        # "a" str 8
 da 00 01 61                     # "a" str 16
 db 00 00 00 01 61               # "a" str 32
 a0                              # "" FixStr
+d9 00                           # "" str 8
 da 00 00                        # "" str 16
 db 00 00 00 00                  # "" str 32
 91 00                           # [0] FixArray
