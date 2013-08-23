@@ -40,12 +40,12 @@ local data = {
     -0.0,               "-0.0 double",
     1.0,                "1.0 double",
     -1.0,               "-1.0 double",
-    "a",                "\"a\" FixRaw",
-    "a",                "\"a\" raw 16",
-    "a",                "\"a\" raw 32",
-    "",                 "\"\" FixRaw",
-    "",                 "\"\" raw 16",
-    "",                 "\"\" raw 32",
+    "a",                "\"a\" FixStr",
+    "a",                "\"a\" str 16",
+    "a",                "\"a\" str 32",
+    "",                 "\"\" FixStr",
+    "",                 "\"\" str 16",
+    "",                 "\"\" str 32",
     { 0 },              "[0] FixArray",
     { 0 },              "[0] array 16",
     { 0 },              "[0] array 32",
@@ -99,12 +99,12 @@ ca 80 00 00 00                  # -0.0 float
 cb 80 00 00 00 00 00 00 00      # -0.0 double
 cb 3f f0 00 00 00 00 00 00      # 1.0 double
 cb bf f0 00 00 00 00 00 00      # -1.0 double
-a1 61                           # "a" FixRaw
-da 00 01 61                     # "a" raw 16
-db 00 00 00 01 61               # "a" raw 32
-a0                              # "" FixRaw
-da 00 00                        # "" raw 16
-db 00 00 00 00                  # "" raw 32
+a1 61                           # "a" FixStr
+da 00 01 61                     # "a" str 16
+db 00 00 00 01 61               # "a" str 32
+a0                              # "" FixStr
+da 00 00                        # "" str 16
+db 00 00 00 00                  # "" str 32
 91 00                           # [0] FixArray
 dc 00 01 00                     # [0] array 16
 dd 00 00 00 01 00               # [0] array 32

@@ -80,13 +80,13 @@ end
 packers['string'] = function (buffer, str)
     local n = #str
     if n <= 0x1F then
-        buffer[#buffer+1] = char(0xA0 + n)      -- fixraw
+        buffer[#buffer+1] = char(0xA0 + n)      -- fixstr
     elseif n <= 0xFFFF then
-        buffer[#buffer+1] = char(0xDA,          -- raw16
+        buffer[#buffer+1] = char(0xDA,          -- str16
                                  floor(n / 0x100),
                                  n % 0x100)
     elseif n <= 0xFFFFFFFF then
-        buffer[#buffer+1] = char(0xDB,          -- raw32
+        buffer[#buffer+1] = char(0xDB,          -- str32
                                  floor(n / 0x1000000),
                                  floor(n / 0x10000) % 0x100,
                                  floor(n / 0x100) % 0x100,
@@ -431,8 +431,8 @@ local types_map = setmetatable({
     [0xD1] = 'int16',
     [0xD2] = 'int32',
     [0xD3] = 'int64',
-    [0xDA] = 'raw16',
-    [0xDB] = 'raw32',
+    [0xDA] = 'str16',
+    [0xDB] = 'str32',
     [0xDC] = 'array16',
     [0xDD] = 'array32',
     [0xDE] = 'map16',
@@ -446,7 +446,7 @@ local types_map = setmetatable({
             elseif k < 0xA0 then
                 return 'fixarray'
             else
-                return 'fixraw'
+                return 'fixstr'
             end
         elseif k > 0xDF then
             return 'fixnum_neg'
@@ -677,7 +677,7 @@ unpackers['int64'] = function (c)
     end
 end
 
-unpackers['fixraw'] = function (c, val)
+unpackers['fixstr'] = function (c, val)
     local s, i, j = c.s, c.i, c.j
     local n = val % 0x20
     local e = i+n-1
@@ -689,7 +689,7 @@ unpackers['fixraw'] = function (c, val)
     return s:sub(i, e)
 end
 
-unpackers['raw16'] = function (c)
+unpackers['str16'] = function (c)
     local s, i, j = c.s, c.i, c.j
     if i+1 > j then
         c:underflow(i+1)
@@ -708,7 +708,7 @@ unpackers['raw16'] = function (c)
     return s:sub(i, e)
 end
 
-unpackers['raw32'] = function (c)
+unpackers['str32'] = function (c)
     local s, i, j = c.s, c.i, c.j
     if i+3 > j then
         c:underflow(i+3)
