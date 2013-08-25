@@ -178,7 +178,7 @@ end
 
 local set_array = function (array)
     if array == 'without_hole' then
-        packers['table'] = function (buffer, tbl)
+        packers['_table'] = function (buffer, tbl)
             local is_map, n, max = false, 0, 0
             for k in pairs(tbl) do
                 if type(k) == 'number' and k > 0 then
@@ -200,7 +200,7 @@ local set_array = function (array)
             end
         end
     elseif array == 'with_hole' then
-        packers['table'] = function (buffer, tbl)
+        packers['_table'] = function (buffer, tbl)
             local is_map, n, max = false, 0, 0
             for k in pairs(tbl) do
                 if type(k) == 'number' and k > 0 then
@@ -223,6 +223,10 @@ local set_array = function (array)
     end
 end
 m.set_array = set_array
+
+packers['table'] = function (buffer, tbl)
+    return packers['_table'](buffer, tbl)
+end
 
 packers['unsigned'] = function (buffer, n)
     if n >= 0 then
@@ -445,6 +449,65 @@ local set_number = function (number)
 end
 m.set_number = set_number
 
+packers['fixext1'] = function (buffer, t, data)
+    assert(#data, 1)
+    buffer[#buffer+1] = char(0xD4,      -- fixext1
+                             t < 0 and t + 0x100 or t)
+    buffer[#buffer+1] = data
+end
+
+packers['fixext2'] = function (buffer, t, data)
+    assert(#data, 2)
+    buffer[#buffer+1] = char(0xD5,      -- fixext2
+                             t < 0 and t + 0x100 or t)
+    buffer[#buffer+1] = data
+end
+
+packers['fixext4'] = function (buffer, t, data)
+    assert(#data, 4)
+    buffer[#buffer+1] = char(0xD6,      -- fixext4
+                             t < 0 and t + 0x100 or t)
+    buffer[#buffer+1] = data
+end
+
+packers['fixext8'] = function (buffer, t, data)
+    assert(#data, 8)
+    buffer[#buffer+1] = char(0xD7,      -- fixext8
+                             t < 0 and t + 0x100 or t)
+    buffer[#buffer+1] = data
+end
+
+packers['fixext16'] = function (buffer, t, data)
+    assert(#data, 16)
+    buffer[#buffer+1] = char(0xD8,      -- fixext16
+                             t < 0 and t + 0x100 or t)
+    buffer[#buffer+1] = data
+end
+
+packers['ext'] = function (buffer, t, data)
+    local n = #data
+    if n <= 0xFF then
+        buffer[#buffer+1] = char(0xC7,          -- ext8
+                                 n,
+                                 t < 0 and t + 0x100 or t)
+    elseif n <= 0xFFFF then
+        buffer[#buffer+1] = char(0xC8,          -- ext16
+                                 floor(n / 0x100),
+                                 n % 0x100,
+                                 t < 0 and t + 0x100 or t)
+    elseif n <= 0xFFFFFFFF then
+        buffer[#buffer+1] = char(0xC9,          -- ext&32
+                                 floor(n / 0x1000000),
+                                 floor(n / 0x10000) % 0x100,
+                                 floor(n / 0x100) % 0x100,
+                                 n % 0x100,
+                                 t < 0 and t + 0x100 or t)
+    else
+        error"overflow in pack 'ext'"
+    end
+    buffer[#buffer+1] = data
+end
+
 function m.pack (data)
     local buffer = {}
     packers[type(data)](buffer, data)
@@ -459,6 +522,9 @@ local types_map = setmetatable({
     [0xC4] = 'bin8',
     [0xC5] = 'bin16',
     [0xC6] = 'bin32',
+    [0xC7] = 'ext8',
+    [0xC8] = 'ext16',
+    [0xC9] = 'ext32',
     [0xCA] = 'float',
     [0xCB] = 'double',
     [0xCC] = 'uint8',
@@ -469,6 +535,11 @@ local types_map = setmetatable({
     [0xD1] = 'int16',
     [0xD2] = 'int32',
     [0xD3] = 'int64',
+    [0xD4] = 'fixext1',
+    [0xD5] = 'fixext2',
+    [0xD6] = 'fixext4',
+    [0xD7] = 'fixext8',
+    [0xD8] = 'fixext16',
     [0xD9] = 'str8',
     [0xDA] = 'str16',
     [0xDB] = 'str32',
@@ -838,6 +909,176 @@ unpackers['map32'] = function (c)
     local b1, b2, b3, b4 = s:sub(i, i+3):byte(1, 4)
     c.i = i+4
     return unpack_map(c, ((b1 * 0x100 + b2) * 0x100 + b3) * 0x100 + b4)
+end
+
+function m.build_ext (t, data)
+    return nil
+end
+
+unpackers['fixext1'] = function (c)
+    local s, i, j = c.s, c.i, c.j
+    if i > j then
+        c:underflow(i)
+        s, i, j = c.s, c.i, c.j
+    end
+    local t = s:sub(i, i):byte()
+    i = i+1
+    c.i = i
+    if i > j then
+        c:underflow(i)
+        s, i, j = c.s, c.i, c.j
+    end
+    c.i = i+1
+    return m.build_ext(t < 0x80 and t or t - 0x100, s:sub(i, i))
+end
+
+unpackers['fixext2'] = function (c)
+    local s, i, j = c.s, c.i, c.j
+    if i > j then
+        c:underflow(i)
+        s, i, j = c.s, c.i, c.j
+    end
+    local t = s:sub(i, i):byte()
+    i = i+1
+    c.i = i
+    local e = i+1
+    if e > j then
+        c:underflow(e)
+        s, i, j = c.s, c.i, c.j
+    end
+    c.i = i+2
+    return m.build_ext(t < 0x80 and t or t - 0x100, s:sub(i, e))
+end
+
+unpackers['fixext4'] = function (c)
+    local s, i, j = c.s, c.i, c.j
+    if i > j then
+        c:underflow(i)
+        s, i, j = c.s, c.i, c.j
+    end
+    local t = s:sub(i, i):byte()
+    i = i+1
+    c.i = i
+    local e = i+3
+    if e > j then
+        c:underflow(e)
+        s, i, j = c.s, c.i, c.j
+    end
+    c.i = i+4
+    return m.build_ext(t < 0x80 and t or t - 0x100, s:sub(i, e))
+end
+
+unpackers['fixext8'] = function (c)
+    local s, i, j = c.s, c.i, c.j
+    if i > j then
+        c:underflow(i)
+        s, i, j = c.s, c.i, c.j
+    end
+    local t = s:sub(i, i):byte()
+    i = i+1
+    c.i = i
+    local e = i+7
+    if e > j then
+        c:underflow(e)
+        s, i, j = c.s, c.i, c.j
+    end
+    c.i = i+8
+    return m.build_ext(t < 0x80 and t or t - 0x100, s:sub(i, e))
+end
+
+unpackers['fixext16'] = function (c)
+    local s, i, j = c.s, c.i, c.j
+    if i > j then
+        c:underflow(i)
+        s, i, j = c.s, c.i, c.j
+    end
+    local t = s:sub(i, i):byte()
+    i = i+1
+    c.i = i
+    local e = i+15
+    if e > j then
+        c:underflow(e)
+        s, i, j = c.s, c.i, c.j
+    end
+    c.i = i+16
+    return m.build_ext(t < 0x80 and t or t - 0x100, s:sub(i, e))
+end
+
+unpackers['ext8'] = function (c)
+    local s, i, j = c.s, c.i, c.j
+    if i > j then
+        c:underflow(i)
+        s, i, j = c.s, c.i, c.j
+    end
+    local n = s:sub(i, i):byte()
+    i = i+1
+    c.i = i
+    if i > j then
+        c:underflow(i)
+        s, i, j = c.s, c.i, c.j
+    end
+    local t = s:sub(i, i):byte()
+    i = i+1
+    c.i = i
+    local e = i+n-1
+    if e > j then
+        c:underflow(e)
+        s, i, j = c.s, c.i, c.j
+    end
+    c.i = i+n
+    return m.build_ext(t < 0x80 and t or t - 0x100, s:sub(i, e))
+end
+
+unpackers['ext16'] = function (c)
+    local s, i, j = c.s, c.i, c.j
+    if i+1 > j then
+        c:underflow(i+1)
+        s, i, j = c.s, c.i, c.j
+    end
+    local b1, b2 = s:sub(i, i+1):byte(1, 2)
+    i = i+2
+    c.i = i
+    local n = b1 * 0x100 + b2
+    if i > j then
+        c:underflow(i)
+        s, i, j = c.s, c.i, c.j
+    end
+    local t = s:sub(i, i):byte()
+    i = i+1
+    c.i = i
+    local e = i+n-1
+    if e > j then
+        c:underflow(e)
+        s, i, j = c.s, c.i, c.j
+    end
+    c.i = i+n
+    return m.build_ext(t < 0x80 and t or t - 0x100, s:sub(i, e))
+end
+
+unpackers['ext32'] = function (c)
+    local s, i, j = c.s, c.i, c.j
+    if i+3 > j then
+        c:underflow(i+3)
+        s, i, j = c.s, c.i, c.j
+    end
+    local b1, b2, b3, b4 = s:sub(i, i+3):byte(1, 4)
+    i = i+4
+    c.i = i
+    local n = ((b1 * 0x100 + b2) * 0x100 + b3) * 0x100 + b4
+    if i > j then
+        c:underflow(i)
+        s, i, j = c.s, c.i, c.j
+    end
+    local t = s:sub(i, i):byte()
+    i = i+1
+    c.i = i
+    local e = i+n-1
+    if e > j then
+        c:underflow(e)
+        s, i, j = c.s, c.i, c.j
+    end
+    c.i = i+n
+    return m.build_ext(t < 0x80 and t or t - 0x100, s:sub(i, e))
 end
 
 
