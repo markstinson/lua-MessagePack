@@ -1,6 +1,6 @@
 Revision history for lua-MessagePack
 
-0.2.2
+0.2.2  Sun Aug 25 09:30:00 2013
 	fix packer when downcast double->float
 
 0.2.1  Thu Nov 29 19:30:00 2012

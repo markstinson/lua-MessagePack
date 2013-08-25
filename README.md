@@ -24,7 +24,7 @@ and the sources are hosted at [http://github.com/fperrad/lua-MessagePack/](http:
 Copyright and License
 ---------------------
 
-Copyright (c) 2012 Francois Perrad
+Copyright (c) 2012-2013 Francois Perrad
 
 This library is licensed under the terms of the MIT/X11 license, like Lua itself.
 

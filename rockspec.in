@@ -1,18 +1,18 @@
 package = 'lua-MessagePack'
 version = '@version@-@rev@'
 source = {
-    url = 'http://cloud.github.com/downloads/fperrad/lua-MessagePack/lua-messagepack-@version@.tar.gz',
+    url = 'http://sites.google.com/site/fperrad/lua-messagepack-@version@.tar.gz',
     md5 = '@md5@',
     dir = 'lua-MessagePack-@version@',
 }
 description = {
-    summary = "a pure Lua implementation",
+    summary = "a pure Lua implementation of the MessagePack serialization format",
     detailed = [[
         MessagePack is an efficient binary serialization format.
 
         It lets you exchange data among multiple languages like JSON but it's faster and smaller.
     ]],
-    homepage = 'http://fperrad.github.com/lua-MessagePack/',
+    homepage = 'http://fperrad.github.io/lua-MessagePack/',
     maintainer = 'Francois Perrad',
     license = 'MIT/X11'
 }
