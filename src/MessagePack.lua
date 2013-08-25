@@ -77,7 +77,7 @@ packers['boolean'] = function (buffer, bool)
     end
 end
 
-packers['string'] = function (buffer, str)
+packers['_string'] = function (buffer, str)
     local n = #str
     if n <= 0x1F then
         buffer[#buffer+1] = char(0xA0 + n)      -- fixstr
@@ -99,6 +99,38 @@ packers['string'] = function (buffer, str)
     end
     buffer[#buffer+1] = str
 end
+
+packers['binary'] = function (buffer, str)
+    local n = #str
+    if n <= 0xFF then
+        buffer[#buffer+1] = char(0xC4,          -- bin8
+                                 n)
+    elseif n <= 0xFFFF then
+        buffer[#buffer+1] = char(0xC5,          -- bin16
+                                 floor(n / 0x100),
+                                 n % 0x100)
+    elseif n <= 0xFFFFFFFF then
+        buffer[#buffer+1] = char(0xC6,          -- bin32
+                                 floor(n / 0x1000000),
+                                 floor(n / 0x10000) % 0x100,
+                                 floor(n / 0x100) % 0x100,
+                                 n % 0x100)
+    else
+        error"overflow in pack 'binary'"
+    end
+    buffer[#buffer+1] = str
+end
+
+local set_string = function (str)
+    if str == 'string' then
+        packers['string'] = packers['_string']
+    elseif str == 'binary' then
+        packers['string'] = packers['binary']
+    else
+        argerror('set_string', 1, "invalid option '" .. str .."'")
+    end
+end
+m.set_string = set_string
 
 packers['map'] = function (buffer, tbl, n)
     if n <= 0x0F then
@@ -424,6 +456,9 @@ local types_map = setmetatable({
     [0xC0] = 'nil',
     [0xC2] = 'false',
     [0xC3] = 'true',
+    [0xC4] = 'bin8',
+    [0xC5] = 'bin16',
+    [0xC6] = 'bin32',
     [0xCA] = 'float',
     [0xCB] = 'double',
     [0xCC] = 'uint8',
@@ -749,6 +784,10 @@ unpackers['str32'] = function (c)
     return s:sub(i, e)
 end
 
+unpackers['bin8'] = unpackers['str8']
+unpackers['bin16'] = unpackers['str16']
+unpackers['bin32'] = unpackers['str32']
+
 unpackers['fixarray'] = function (c, val)
     return unpack_array(c, val % 0x10)
 end
@@ -867,6 +906,7 @@ function m.unpacker (src)
     end
 end
 
+set_string'string'
 set_integer'signed'
 if NUMBER_INTEGRAL then
     set_number'integer'

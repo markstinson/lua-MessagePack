@@ -48,6 +48,12 @@ local data = {
     "",                 "\"\" str 8",
     "",                 "\"\" str 16",
     "",                 "\"\" str 32",
+    "a",                "\"a\" bin 8",
+    "a",                "\"a\" bin 16",
+    "a",                "\"a\" bin 32",
+    "",                 "\"\" bin 8",
+    "",                 "\"\" bin 16",
+    "",                 "\"\" bin 32",
     { 0 },              "[0] FixArray",
     { 0 },              "[0] array 16",
     { 0 },              "[0] array 32",
@@ -64,7 +70,7 @@ local data = {
     { {"a"} },          "[[\"a\"]]",
 }
 
-plan(3 * #data)
+plan(7 * #data / 2)
 
 -- see http://github.com/msgpack/msgpack/blob/master/test/cases_gen.rb
 local source = [===[
@@ -109,6 +115,12 @@ a0                              # "" FixStr
 d9 00                           # "" str 8
 da 00 00                        # "" str 16
 db 00 00 00 00                  # "" str 32
+c4 01 61                        # "a" bin 8
+c5 00 01 61                     # "a" bin 16
+c6 00 00 00 01 61               # "a" bin 32
+c4 00                           # "" bin 8
+c5 00 00                        # "" bin 16
+c6 00 00 00 00                  # "" bin 32
 91 00                           # [0] FixArray
 dc 00 01 00                     # [0] array 16
 dd 00 00 00 01 00               # [0] array 32
@@ -181,6 +193,20 @@ for _, val in mp.unpacker(s) do
 end
 os.remove 'cases.mpac'  -- clean up
 
+diag("set_string'binary'")
+mp.set_string'binary'
+local i = 1
+for _, val in mp.unpacker(mpac) do
+    if type(val) == 'table' then
+        is_deeply(mp.unpack(mp.pack(data[i])), data[i], "unpack/pack " .. data[i+1])
+    else
+        is(mp.unpack(mp.pack(data[i])), data[i], "unpack/pack " .. data[i+1])
+    end
+    i = i + 2
+end
+mp.set_string'string'
+
+diag("set_integer'unsigned'")
 mp.set_integer'unsigned'
 local i = 1
 for _, val in mp.unpacker(mpac) do
@@ -192,6 +218,7 @@ for _, val in mp.unpacker(mpac) do
     i = i + 2
 end
 
+diag("set_number'float'")
 mp.set_number'float'
 local i = 1
 for _, val in mp.unpacker(mpac) do
@@ -203,6 +230,7 @@ for _, val in mp.unpacker(mpac) do
     i = i + 2
 end
 
+diag("set_number'integer'")
 mp.set_number'integer'
 local i = 1
 for _, val in mp.unpacker(mpac) do

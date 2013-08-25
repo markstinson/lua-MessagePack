@@ -2,7 +2,7 @@
 
 require 'Test.More'
 
-plan(26)
+plan(29)
 
 local mp = require 'MessagePack'
 
@@ -35,6 +35,14 @@ s = string.rep('x', 2^3)
 is( mp.unpack(mp.pack(s)), s, "#s 2^3" )
 s = string.rep('x', 2^7)
 is( mp.unpack(mp.pack(s)), s, "#s 2^7" )
+s = string.rep('x', 2^11)
+is( mp.unpack(mp.pack(s)), s, "#s 2^11" )
+s = string.rep('x', 2^19)
+is( mp.unpack(mp.pack(s)), s, "#s 2^19" )
+
+mp.set_string'binary'
+s = string.rep('x', 2^5)
+is( mp.unpack(mp.pack(s)), s, "#s 2^5" )
 s = string.rep('x', 2^11)
 is( mp.unpack(mp.pack(s)), s, "#s 2^11" )
 s = string.rep('x', 2^19)

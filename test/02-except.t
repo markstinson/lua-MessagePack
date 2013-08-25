@@ -2,7 +2,7 @@
 
 require 'Test.More'
 
-plan(18)
+plan(19)
 
 local mp = require 'MessagePack'
 
@@ -76,6 +76,11 @@ error_like( function ()
                 end
             end,
             "missing bytes" )
+
+error_like( function ()
+                mp.set_string'bad'
+            end,
+            "bad argument #1 to set_string %(invalid option 'bad'%)" )
 
 error_like( function ()
                 mp.set_number'bad'
