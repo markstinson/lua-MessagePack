@@ -449,39 +449,15 @@ local set_number = function (number)
 end
 m.set_number = set_number
 
-packers['fixext1'] = function (buffer, t, data)
-    assert(#data, 1)
-    buffer[#buffer+1] = char(0xD4,      -- fixext1
-                             t < 0 and t + 0x100 or t)
-    buffer[#buffer+1] = data
-end
-
-packers['fixext2'] = function (buffer, t, data)
-    assert(#data, 2)
-    buffer[#buffer+1] = char(0xD5,      -- fixext2
-                             t < 0 and t + 0x100 or t)
-    buffer[#buffer+1] = data
-end
-
-packers['fixext4'] = function (buffer, t, data)
-    assert(#data, 4)
-    buffer[#buffer+1] = char(0xD6,      -- fixext4
-                             t < 0 and t + 0x100 or t)
-    buffer[#buffer+1] = data
-end
-
-packers['fixext8'] = function (buffer, t, data)
-    assert(#data, 8)
-    buffer[#buffer+1] = char(0xD7,      -- fixext8
-                             t < 0 and t + 0x100 or t)
-    buffer[#buffer+1] = data
-end
-
-packers['fixext16'] = function (buffer, t, data)
-    assert(#data, 16)
-    buffer[#buffer+1] = char(0xD8,      -- fixext16
-                             t < 0 and t + 0x100 or t)
-    buffer[#buffer+1] = data
+for k = 0, 4 do
+    local n = 2^k
+    local fixext = 0xD4 + k
+    packers['fixext' .. n] = function (buffer, t, data)
+        assert(#data, n)
+        buffer[#buffer+1] = char(fixext,
+                                 t < 0 and t + 0x100 or t)
+        buffer[#buffer+1] = data
+    end
 end
 
 packers['ext'] = function (buffer, t, data)
@@ -915,93 +891,25 @@ function m.build_ext (t, data)
     return nil
 end
 
-unpackers['fixext1'] = function (c)
-    local s, i, j = c.s, c.i, c.j
-    if i > j then
-        c:underflow(i)
-        s, i, j = c.s, c.i, c.j
+for k = 0, 4 do
+    local n = 2^k
+    unpackers['fixext' .. n] = function (c)
+        local s, i, j = c.s, c.i, c.j
+        if i > j then
+            c:underflow(i)
+            s, i, j = c.s, c.i, c.j
+        end
+        local t = s:sub(i, i):byte()
+        i = i+1
+        c.i = i
+        local e = i+n-1
+        if e > j then
+            c:underflow(e)
+            s, i, j = c.s, c.i, c.j
+        end
+        c.i = i+n
+        return m.build_ext(t < 0x80 and t or t - 0x100, s:sub(i, e))
     end
-    local t = s:sub(i, i):byte()
-    i = i+1
-    c.i = i
-    if i > j then
-        c:underflow(i)
-        s, i, j = c.s, c.i, c.j
-    end
-    c.i = i+1
-    return m.build_ext(t < 0x80 and t or t - 0x100, s:sub(i, i))
-end
-
-unpackers['fixext2'] = function (c)
-    local s, i, j = c.s, c.i, c.j
-    if i > j then
-        c:underflow(i)
-        s, i, j = c.s, c.i, c.j
-    end
-    local t = s:sub(i, i):byte()
-    i = i+1
-    c.i = i
-    local e = i+1
-    if e > j then
-        c:underflow(e)
-        s, i, j = c.s, c.i, c.j
-    end
-    c.i = i+2
-    return m.build_ext(t < 0x80 and t or t - 0x100, s:sub(i, e))
-end
-
-unpackers['fixext4'] = function (c)
-    local s, i, j = c.s, c.i, c.j
-    if i > j then
-        c:underflow(i)
-        s, i, j = c.s, c.i, c.j
-    end
-    local t = s:sub(i, i):byte()
-    i = i+1
-    c.i = i
-    local e = i+3
-    if e > j then
-        c:underflow(e)
-        s, i, j = c.s, c.i, c.j
-    end
-    c.i = i+4
-    return m.build_ext(t < 0x80 and t or t - 0x100, s:sub(i, e))
-end
-
-unpackers['fixext8'] = function (c)
-    local s, i, j = c.s, c.i, c.j
-    if i > j then
-        c:underflow(i)
-        s, i, j = c.s, c.i, c.j
-    end
-    local t = s:sub(i, i):byte()
-    i = i+1
-    c.i = i
-    local e = i+7
-    if e > j then
-        c:underflow(e)
-        s, i, j = c.s, c.i, c.j
-    end
-    c.i = i+8
-    return m.build_ext(t < 0x80 and t or t - 0x100, s:sub(i, e))
-end
-
-unpackers['fixext16'] = function (c)
-    local s, i, j = c.s, c.i, c.j
-    if i > j then
-        c:underflow(i)
-        s, i, j = c.s, c.i, c.j
-    end
-    local t = s:sub(i, i):byte()
-    i = i+1
-    c.i = i
-    local e = i+15
-    if e > j then
-        c:underflow(e)
-        s, i, j = c.s, c.i, c.j
-    end
-    c.i = i+16
-    return m.build_ext(t < 0x80 and t or t - 0x100, s:sub(i, e))
 end
 
 unpackers['ext8'] = function (c)
