@@ -70,7 +70,7 @@ local data = {
     { {"a"} },          "[[\"a\"]]",
 }
 
-plan(7 * #data / 2)
+plan(8 * #data / 2)
 
 -- see http://github.com/msgpack/msgpack/blob/master/test/cases_gen.rb
 local source = [===[
@@ -193,6 +193,18 @@ for _, val in mp.unpacker(s) do
 end
 os.remove 'cases.mpac'  -- clean up
 
+diag("set_string'string'")
+mp.set_string'string'
+local i = 1
+for _, val in mp.unpacker(mpac) do
+    if type(val) == 'table' then
+        is_deeply(mp.unpack(mp.pack(data[i])), data[i], "unpack/pack " .. data[i+1])
+    else
+        is(mp.unpack(mp.pack(data[i])), data[i], "unpack/pack " .. data[i+1])
+    end
+    i = i + 2
+end
+
 diag("set_string'binary'")
 mp.set_string'binary'
 local i = 1
@@ -204,7 +216,7 @@ for _, val in mp.unpacker(mpac) do
     end
     i = i + 2
 end
-mp.set_string'string'
+mp.set_string'string_compat'
 
 diag("set_integer'unsigned'")
 mp.set_integer'unsigned'
@@ -217,6 +229,7 @@ for _, val in mp.unpacker(mpac) do
     end
     i = i + 2
 end
+mp.set_integer'signed'
 
 diag("set_number'float'")
 mp.set_number'float'

@@ -2,7 +2,7 @@
 
 require 'Test.More'
 
-plan(29)
+plan(32)
 
 local mp = require 'MessagePack'
 
@@ -31,22 +31,31 @@ is( mp.unpack(mp.pack(-2^21)), -2^21, "-2^21" )
 is( mp.unpack(mp.pack(2^51)), 2^51, "2^51" )
 is( mp.unpack(mp.pack(-2^51)), -2^51, "-2^51" )
 
+mp.set_string'string'
 s = string.rep('x', 2^3)
-is( mp.unpack(mp.pack(s)), s, "#s 2^3" )
+is( mp.unpack(mp.pack(s)), s, "#s 2^3" )        -- fixstr
 s = string.rep('x', 2^7)
-is( mp.unpack(mp.pack(s)), s, "#s 2^7" )
+is( mp.unpack(mp.pack(s)), s, "#s 2^7" )        -- str 8
 s = string.rep('x', 2^11)
-is( mp.unpack(mp.pack(s)), s, "#s 2^11" )
+is( mp.unpack(mp.pack(s)), s, "#s 2^11" )       -- str 16
 s = string.rep('x', 2^19)
-is( mp.unpack(mp.pack(s)), s, "#s 2^19" )
+is( mp.unpack(mp.pack(s)), s, "#s 2^19" )       -- str 32
+
+mp.set_string'string_compat'
+s = string.rep('x', 2^3)
+is( mp.unpack(mp.pack(s)), s, "#s 2^3" )        -- fixstr
+s = string.rep('x', 2^11)
+is( mp.unpack(mp.pack(s)), s, "#s 2^11" )       -- str 16
+s = string.rep('x', 2^19)
+is( mp.unpack(mp.pack(s)), s, "#s 2^19" )       -- str 32
 
 mp.set_string'binary'
 s = string.rep('x', 2^5)
-is( mp.unpack(mp.pack(s)), s, "#s 2^5" )
+is( mp.unpack(mp.pack(s)), s, "#s 2^5" )        -- bin 8
 s = string.rep('x', 2^11)
-is( mp.unpack(mp.pack(s)), s, "#s 2^11" )
+is( mp.unpack(mp.pack(s)), s, "#s 2^11" )       -- bin 16
 s = string.rep('x', 2^19)
-is( mp.unpack(mp.pack(s)), s, "#s 2^19" )
+is( mp.unpack(mp.pack(s)), s, "#s 2^19" )       -- bin 32
 
 t = { string.rep('x', 2^3):byte(1, -1) }
 is_deeply( mp.unpack(mp.pack(t)), t, "#t 2^3" )

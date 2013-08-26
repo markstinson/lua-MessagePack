@@ -77,6 +77,26 @@ packers['boolean'] = function (buffer, bool)
     end
 end
 
+packers['string_compat'] = function (buffer, str)
+    local n = #str
+    if n <= 0x1F then
+        buffer[#buffer+1] = char(0xA0 + n)      -- fixstr
+    elseif n <= 0xFFFF then
+        buffer[#buffer+1] = char(0xDA,          -- str16
+                                 floor(n / 0x100),
+                                 n % 0x100)
+    elseif n <= 0xFFFFFFFF then
+        buffer[#buffer+1] = char(0xDB,          -- str32
+                                 floor(n / 0x1000000),
+                                 floor(n / 0x10000) % 0x100,
+                                 floor(n / 0x100) % 0x100,
+                                 n % 0x100)
+    else
+        error"overflow in pack 'string_compat'"
+    end
+    buffer[#buffer+1] = str
+end
+
 packers['_string'] = function (buffer, str)
     local n = #str
     if n <= 0x1F then
@@ -122,7 +142,9 @@ packers['binary'] = function (buffer, str)
 end
 
 local set_string = function (str)
-    if str == 'string' then
+    if str == 'string_compat' then
+        packers['string'] = packers['string_compat']
+    elseif str == 'string' then
         packers['string'] = packers['_string']
     elseif str == 'binary' then
         packers['string'] = packers['binary']
@@ -1055,7 +1077,7 @@ function m.unpacker (src)
     end
 end
 
-set_string'string'
+set_string'string_compat'
 set_integer'signed'
 if NUMBER_INTEGRAL then
     set_number'integer'
