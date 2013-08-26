@@ -68,9 +68,18 @@ local data = {
     { a=97 },           "{\"a\"=>97} map 32",
     { {} },             "[[]]",
     { {"a"} },          "[[\"a\"]]",
+
+    nil,                "fixext 1",
+    nil,                "fixext 2",
+    nil,                "fixext 4",
+    nil,                "fixext 8",
+    nil,                "fixext 16",
+    nil,                "ext 8",
+    nil,                "ext 16",
+    nil,                "ext 32",
 }
 
-plan(8 * #data / 2)
+plan(8 * 69)
 
 -- see http://github.com/msgpack/msgpack/blob/master/test/cases_gen.rb
 local source = [===[
@@ -135,6 +144,15 @@ de 00 01 a1 61 61               # {"a"=>97} map 16
 df 00 00 00 01 a1 61 61         # {"a"=>97} map 32
 91 90                           # [[]]
 91 91 a1 61                     # [["a"]]
+
+d4 01 01                        # fixext 1
+d5 02 02 01                     # fixext 2
+d6 04 04 03 02 01               # fixext 4
+d7 08 08 07 06 05 04 03 02 01   # fixext 8
+d8 16 10 0f 0e 0d 0c 0b 0a 09 08 07 06 05 04 03 02 01   # fixext 16
+c7 01 08 61                     # ext 8
+c8 00 01 16 61                  # ext 16
+c9 00 00 00 01 32 61            # ext 32
 ]===]
 
 source = source:gsub('#[^\n]+', '')
