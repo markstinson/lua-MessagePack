@@ -93,6 +93,12 @@ The default is <code>'signed'</code>.</p>
 The valid options are <code>'without_hole'</code> and <code>'with_hole'</code>.
 The default is <code>'without_hole'</code>.</p>
 
+<h4><code>set_string( str )</code></h4>
+
+<p>Configures the behaviour of <code>pack</code>.
+The valid options are <code>'string'</code>, <code>'string_compat'</code> and <code>'binary'</code>.
+The default is <code>'string_compat'</code> in order to be compatible with old implementation.</p>
+
 <h3>Data Conversion</h3>
 
 <ul>
@@ -122,6 +128,35 @@ The default is <code>'without_hole'</code>.</p>
   data with <em>cyclic reference</em>.</li>
 </ul>
 
+<h3>Extensions</h3>
+
+<p>There are introduced with <strong>MessagePack</strong> specification v5.</p>
+<p>During deserialization, unknown extensions are skipped and evaluated
+as a <strong>Lua</strong> <code>nil</code>.</p>
+<p>The following example shows how to create a new <code>module</code>
+which extends <code>MessagePack</code> with the serialization/deserialization
+of <strong>Lua</strong> <code>function</code>
+(obviously, the emitter and receiver MUST use the same version of Lua).</p>
+
+<pre class="example">
+local loadstring = loadstring or load
+local mp = require 'MessagePack'
+local EXT_FUNCTION = 7
+
+mp.packers['function'] = function (buffer, fct)
+    mp.packers['ext'](buffer, EXT_FUNCTION, assert(string.dump(fct)))
+end
+
+mp.build_ext = function (tag, data)
+    if tag == EXT_FUNCTION then
+        return assert(loadstring(data))
+    end
+end
+
+return mp
+</pre>
+
+
 <h2><a name="examples"></a>Examples</h2>
 
 <pre class="example">
@@ -130,6 +165,7 @@ local mp = require 'MessagePack'
 mp.set_number'float'
 mp.set_integer'unsigned'
 mp.set_array'with_hole'
+mp.set_string'string'
 
 mpac = mp.pack(data)
 data = mp.unpack(mpac)
