@@ -18,7 +18,7 @@ And it's really fast with LuaJIT.
 Links
 -----
 
-The homepage is at [http://fperrad.github.com/lua-MessagePack/](http://fperrad.github.com/lua-MessagePack/),
+The homepage is at [http://fperrad.github.io/lua-MessagePack/](http://fperrad.github.io/lua-MessagePack/),
 and the sources are hosted at [http://github.com/fperrad/lua-MessagePack/](http://github.com/fperrad/lua-MessagePack/).
 
 Copyright and License
