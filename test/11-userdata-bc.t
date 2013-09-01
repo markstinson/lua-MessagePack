@@ -21,8 +21,8 @@ mp.packers['userdata'] = function (buffer, u)
     end
 end
 
-mp.build_ext = function (t, data)
-    if t == EXT_BC then
+mp.build_ext = function (tag, data)
+    if tag == EXT_BC then
         return bc.number(data)
     end
 end

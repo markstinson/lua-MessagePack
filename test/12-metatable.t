@@ -20,8 +20,8 @@ mp.packers['table'] = function (buffer, t)
     end
 end
 
-mp.build_ext = function (t, data)
-    if t == EXT_METATABLE then
+mp.build_ext = function (tag, data)
+    if tag == EXT_METATABLE then
         local f = mp.unpacker(data)
         local _, t = f()
         local _, mt = f()

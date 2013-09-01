@@ -39,14 +39,14 @@ mp.packers['cdata'] = function (buffer, cdata)
     end
 end
 
-mp.build_ext = function (t, data)
-    if     t == EXT_UINT then
+mp.build_ext = function (tag, data)
+    if     tag == EXT_UINT then
         return uint8_t(ffi.cast(uint8_p, data)[0])
-    elseif t == EXT_UINT+1 then
+    elseif tag == EXT_UINT+1 then
         return uint16_t(ffi.cast(uint16_p, data)[0])
-    elseif t == EXT_UINT+2 then
+    elseif tag == EXT_UINT+2 then
         return uint32_t(ffi.cast(uint32_p, data)[0])
-    elseif t == EXT_UINT+3 then
+    elseif tag == EXT_UINT+3 then
         return uint64_t(ffi.cast(uint64_p, data)[0])
     end
 end

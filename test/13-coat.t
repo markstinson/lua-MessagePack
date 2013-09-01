@@ -24,8 +24,8 @@ mp.packers['table'] = function (buffer, obj)
     end
 end
 
-mp.build_ext = function (t, data)
-    if t == EXT_COAT then
+mp.build_ext = function (tag, data)
+    if tag == EXT_COAT then
         local f = mp.unpacker(data)
         local _, classname = f()
         local _, values = f()

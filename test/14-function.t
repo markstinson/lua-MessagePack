@@ -12,8 +12,8 @@ mp.packers['function'] = function (buffer, fct)
     mp.packers['ext'](buffer, EXT_FUNCTION, assert(string.dump(fct)))
 end
 
-mp.build_ext = function (t, data)
-    if t == EXT_FUNCTION then
+mp.build_ext = function (tag, data)
+    if tag == EXT_FUNCTION then
         return assert(loadstring(data))
     end
 end

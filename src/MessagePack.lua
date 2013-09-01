@@ -475,32 +475,32 @@ m.set_number = set_number
 for k = 0, 4 do
     local n = 2^k
     local fixext = 0xD4 + k
-    packers['fixext' .. n] = function (buffer, t, data)
+    packers['fixext' .. n] = function (buffer, tag, data)
         assert(#data == n, "bad length for fixext" .. n)
         buffer[#buffer+1] = char(fixext,
-                                 t < 0 and t + 0x100 or t)
+                                 tag < 0 and tag + 0x100 or tag)
         buffer[#buffer+1] = data
     end
 end
 
-packers['ext'] = function (buffer, t, data)
+packers['ext'] = function (buffer, tag, data)
     local n = #data
     if n <= 0xFF then
         buffer[#buffer+1] = char(0xC7,          -- ext8
                                  n,
-                                 t < 0 and t + 0x100 or t)
+                                 tag < 0 and tag + 0x100 or tag)
     elseif n <= 0xFFFF then
         buffer[#buffer+1] = char(0xC8,          -- ext16
                                  floor(n / 0x100),
                                  n % 0x100,
-                                 t < 0 and t + 0x100 or t)
+                                 tag < 0 and tag + 0x100 or tag)
     elseif n <= 0xFFFFFFFF then
         buffer[#buffer+1] = char(0xC9,          -- ext&32
                                  floor(n / 0x1000000),
                                  floor(n / 0x10000) % 0x100,
                                  floor(n / 0x100) % 0x100,
                                  n % 0x100,
-                                 t < 0 and t + 0x100 or t)
+                                 tag < 0 and tag + 0x100 or tag)
     else
         error"overflow in pack 'ext'"
     end
@@ -910,7 +910,7 @@ unpackers['map32'] = function (c)
     return unpack_map(c, ((b1 * 0x100 + b2) * 0x100 + b3) * 0x100 + b4)
 end
 
-function m.build_ext (t, data)
+function m.build_ext (tag, data)
     return nil
 end
 
@@ -922,7 +922,7 @@ for k = 0, 4 do
             c:underflow(i)
             s, i, j = c.s, c.i, c.j
         end
-        local t = s:sub(i, i):byte()
+        local tag = s:sub(i, i):byte()
         i = i+1
         c.i = i
         local e = i+n-1
@@ -931,7 +931,7 @@ for k = 0, 4 do
             s, i, j = c.s, c.i, c.j
         end
         c.i = i+n
-        return m.build_ext(t < 0x80 and t or t - 0x100, s:sub(i, e))
+        return m.build_ext(tag < 0x80 and tag or tag - 0x100, s:sub(i, e))
     end
 end
 
@@ -948,7 +948,7 @@ unpackers['ext8'] = function (c)
         c:underflow(i)
         s, i, j = c.s, c.i, c.j
     end
-    local t = s:sub(i, i):byte()
+    local tag = s:sub(i, i):byte()
     i = i+1
     c.i = i
     local e = i+n-1
@@ -957,7 +957,7 @@ unpackers['ext8'] = function (c)
         s, i, j = c.s, c.i, c.j
     end
     c.i = i+n
-    return m.build_ext(t < 0x80 and t or t - 0x100, s:sub(i, e))
+    return m.build_ext(tag < 0x80 and tag or tag - 0x100, s:sub(i, e))
 end
 
 unpackers['ext16'] = function (c)
@@ -974,7 +974,7 @@ unpackers['ext16'] = function (c)
         c:underflow(i)
         s, i, j = c.s, c.i, c.j
     end
-    local t = s:sub(i, i):byte()
+    local tag = s:sub(i, i):byte()
     i = i+1
     c.i = i
     local e = i+n-1
@@ -983,7 +983,7 @@ unpackers['ext16'] = function (c)
         s, i, j = c.s, c.i, c.j
     end
     c.i = i+n
-    return m.build_ext(t < 0x80 and t or t - 0x100, s:sub(i, e))
+    return m.build_ext(tag < 0x80 and tag or tag - 0x100, s:sub(i, e))
 end
 
 unpackers['ext32'] = function (c)
@@ -1000,7 +1000,7 @@ unpackers['ext32'] = function (c)
         c:underflow(i)
         s, i, j = c.s, c.i, c.j
     end
-    local t = s:sub(i, i):byte()
+    local tag = s:sub(i, i):byte()
     i = i+1
     c.i = i
     local e = i+n-1
@@ -1009,7 +1009,7 @@ unpackers['ext32'] = function (c)
         s, i, j = c.s, c.i, c.j
     end
     c.i = i+n
-    return m.build_ext(t < 0x80 and t or t - 0x100, s:sub(i, e))
+    return m.build_ext(tag < 0x80 and tag or tag - 0x100, s:sub(i, e))
 end
 
 
