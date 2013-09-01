@@ -18,6 +18,7 @@ if not jit then
     NUMBER_INTEGRAL = 1 == header[12]
 end
 
+local assert = assert
 local error = error
 local pairs = pairs
 local pcall = pcall
@@ -475,7 +476,7 @@ for k = 0, 4 do
     local n = 2^k
     local fixext = 0xD4 + k
     packers['fixext' .. n] = function (buffer, t, data)
-        assert(#data, n)
+        assert(#data == n, "bad length for fixext" .. n)
         buffer[#buffer+1] = char(fixext,
                                  t < 0 and t + 0x100 or t)
         buffer[#buffer+1] = data

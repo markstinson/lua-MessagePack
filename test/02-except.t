@@ -2,7 +2,7 @@
 
 require 'Test.More'
 
-plan(19)
+plan(20)
 
 local mp = require 'MessagePack'
 
@@ -96,4 +96,9 @@ error_like( function ()
                 mp.set_array'bad'
             end,
             "bad argument #1 to set_array %(invalid option 'bad'%)" )
+
+error_like( function ()
+                mp.packers['fixext4'](nil, 1, '123')
+            end,
+            "bad length for fixext4" )
 
