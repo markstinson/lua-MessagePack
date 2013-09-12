@@ -1,6 +1,5 @@
-
-lua-MessagePack : a pure Lua implementation
-===========================================
+lua-MessagePack : a pure Lua implementation (spec v5)
+=====================================================
 
 [![Build Status](https://travis-ci.org/fperrad/lua-MessagePack.png)](https://travis-ci.org/fperrad/lua-MessagePack)
 
@@ -13,7 +12,7 @@ It lets you exchange data among multiple languages like JSON but it's faster and
 
 It's a pure Lua implementation, without dependency.
 
-And it's really fast with LuaJIT.
+And it's really fast with [LuaJIT](http://luajit.org).
 
 Links
 -----
